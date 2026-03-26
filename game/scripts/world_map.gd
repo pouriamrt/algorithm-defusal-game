@@ -2,7 +2,7 @@ extends Control
 ## World map screen between waves. Uses a real map texture with interactive overlays.
 
 var _map_draw: Control
-var _map_texture: TextureRect
+var _map_image: Texture2D
 var _briefing_text: Label
 var _time: float = 0.0
 var _flight_progress: float = 0.0
@@ -37,26 +37,13 @@ func _build_ui() -> void:
 	hbox.add_theme_constant_override("separation", 0)
 	add_child(hbox)
 
-	# LEFT: Map area
-	var map_container := Control.new()
-	map_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	map_container.size_flags_stretch_ratio = 2.0
-	hbox.add_child(map_container)
-
-	# Map texture background
-	_map_texture = TextureRect.new()
-	_map_texture.texture = load("res://assets/world_map.png")
-	_map_texture.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_map_texture.stretch_mode = TextureRect.STRETCH_SCALE
-	_map_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	map_container.add_child(_map_texture)
-
-	# Overlay for drawing cities, paths, etc.
+	# LEFT: Map area — single Control draws both texture and overlays
+	_map_image = load("res://assets/world_map.png")
 	_map_draw = Control.new()
-	_map_draw.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_map_draw.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_map_draw.size_flags_stretch_ratio = 2.0
 	_map_draw.draw.connect(_on_map_draw)
-	_map_draw.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	map_container.add_child(_map_draw)
+	hbox.add_child(_map_draw)
 
 	# RIGHT: Info panel
 	var panel_wrapper := Control.new()
@@ -224,7 +211,11 @@ func _on_map_draw() -> void:
 	var d := _map_draw
 	var s: Vector2 = d.size
 
-	# Interactive overlays on top of the map texture
+	# Draw the map texture first — fills the entire control area
+	if _map_image:
+		d.draw_texture_rect(_map_image, Rect2(Vector2.ZERO, s), false)
+
+	# Draw overlays in the same coordinate space
 	var w: int = DifficultyManager.current_wave
 	_draw_completed_paths(d, w)
 	_draw_flight_animation(d, w)
