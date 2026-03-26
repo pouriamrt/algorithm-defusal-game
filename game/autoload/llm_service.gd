@@ -134,8 +134,8 @@ func _fallback_mission_briefing() -> String:
 
 func _fallback_city_briefing(city_name: String, wave: int, threat_level: String) -> String:
 	var templates := [
-		"NEXUS operatives have planted a device in %s. Threat assessment: %s. Local authorities are unaware. You have one shot at this, Agent.",
-		"Intelligence confirms an algorithm-locked device in %s. NEXUS is using increasingly complex encryption. Threat level: %s. Proceed with extreme caution.",
+		"NEXUS operatives have planted a device in %s. Threat assessment: %s. Wave %d. Local authorities are unaware. You have one shot at this, Agent.",
+		"Intelligence confirms an algorithm-locked device in %s. NEXUS is using increasingly complex encryption. Threat level: %s. Wave %d. Proceed with extreme caution.",
 		"Satellite imagery shows suspicious activity in %s. Our analysts believe a %s-level device is active. This is wave %d — they're getting smarter.",
 	]
 	return templates[wave % templates.size()] % [city_name, threat_level, wave]

@@ -34,7 +34,7 @@ func _ready() -> void:
 	_briefing.start_typewriter()
 	_briefing.deploy_pressed.connect(_on_accept)
 
-	var llm_text: String = LLMService.get_mission_briefing()
+	LLMService.get_mission_briefing()
 	if not LLMService.llm_response_received.is_connected(_on_llm_response):
 		LLMService.llm_response_received.connect(_on_llm_response)
 
