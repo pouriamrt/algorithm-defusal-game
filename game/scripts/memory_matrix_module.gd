@@ -54,8 +54,9 @@ func _build_ui() -> void:
 	_status_label = Label.new()
 	_status_label.text = "MEMORIZE THE PATTERN"
 	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_status_label.add_theme_font_size_override("font_size", 14)
+	_status_label.add_theme_font_size_override("font_size", 13)
 	_status_label.add_theme_color_override("font_color", Color("#ffeb3b"))
+	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(_status_label)
 
 	_timer_label = Label.new()
@@ -252,7 +253,7 @@ func _on_confirm() -> void:
 			_learn_label.text = "Key Insight: Caching stores frequently accessed data for fast retrieval — just like your brain cached this pattern. Cells memorized: %d" % _num_highlighted
 		complete_module()
 	else:
-		_status_label.text = "%d correct, %d wrong, %d missed. Try grouping cells into shapes — our brains remember patterns better than individual positions." % [correct, wrong, missed]
+		_status_label.text = "%d correct, %d wrong, %d missed.\nGroup cells into shapes to remember better." % [correct, wrong, missed]
 		_status_label.add_theme_color_override("font_color", Color("#ff1744"))
 		record_wrong_action()
 		# Reset player selection but don't show pattern again

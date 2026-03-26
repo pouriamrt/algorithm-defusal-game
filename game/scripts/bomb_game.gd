@@ -137,13 +137,35 @@ func _build_ui() -> void:
 
 	vbox.add_child(HSeparator.new())
 
-	# --- Status bar ---
+	# --- Bottom bar: status + buttons ---
+	var bottom_row := HBoxContainer.new()
+	bottom_row.add_theme_constant_override("separation", 15)
+	vbox.add_child(bottom_row)
+
+	# Menu button
+	var menu_btn := Button.new()
+	menu_btn.text = "MAIN MENU"
+	menu_btn.custom_minimum_size = Vector2(120, 32)
+	menu_btn.add_theme_font_size_override("font_size", 12)
+	menu_btn.pressed.connect(_on_main_menu)
+	bottom_row.add_child(menu_btn)
+
+	# Status label (center, expanding)
 	_status_label = Label.new()
 	_status_label.text = "3 modules remaining"
 	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_status_label.add_theme_color_override("font_color", Color("#e0e0e0"))
 	_status_label.add_theme_font_size_override("font_size", 16)
-	vbox.add_child(_status_label)
+	_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bottom_row.add_child(_status_label)
+
+	# Restart button
+	var restart_btn := Button.new()
+	restart_btn.text = "RESTART WAVE"
+	restart_btn.custom_minimum_size = Vector2(120, 32)
+	restart_btn.add_theme_font_size_override("font_size", 12)
+	restart_btn.pressed.connect(_on_restart)
+	bottom_row.add_child(restart_btn)
 
 
 func _apply_wave_theme() -> void:
@@ -289,3 +311,13 @@ func _on_game_over(outcome: String) -> void:
 		_tech_bg.set_alert_level(1.0)
 		await get_tree().create_timer(2.5).timeout
 		get_tree().change_scene_to_file("res://scenes/result_screen.tscn")
+
+
+func _on_main_menu() -> void:
+	GameState.is_game_active = false
+	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+
+
+func _on_restart() -> void:
+	GameState.is_game_active = false
+	get_tree().change_scene_to_file("res://scenes/bomb_game.tscn")
