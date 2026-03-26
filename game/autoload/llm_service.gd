@@ -88,6 +88,19 @@ func get_results_summary(performance_data: Dictionary) -> String:
 	return fallback
 
 
+func get_commentary(event: String, module_name: String, details: Dictionary) -> String:
+	"""Returns fallback commentary immediately. Async LLM result emitted as 'commentary'."""
+	var fallback := _fallback_commentary(event, module_name)
+	if use_llm:
+		_post_request(
+			"/api/commentary",
+			{"event": event, "module_name": module_name, "details": details,
+			 "city": GameState.city_name, "wave": GameState.current_wave},
+			"commentary"
+		)
+	return fallback
+
+
 # --- HTTP helpers ---
 
 
@@ -221,3 +234,41 @@ func _fallback_results_summary(performance_data: Dictionary) -> String:
 			+ "Review the algorithms: binary search, sorting inversions, and Dijkstra's shortest path. "
 			+ "NEXUS remains active. Regroup and try again."
 		)
+
+
+func _fallback_commentary(event: String, module_name: String) -> String:
+	var lines: Dictionary = {
+		"wrong_action": [
+			"Careful, Agent! That cost us stability.",
+			"Wrong move on %s. Think it through." % module_name,
+			"Mistake on %s — stay focused!" % module_name,
+			"The bomb doesn't forgive errors, Agent.",
+			"That wasn't right. Regroup and try again.",
+		],
+		"module_solved": [
+			"Excellent work! %s neutralized." % module_name,
+			"%s defused! Keep this momentum." % module_name,
+			"One down. Don't let up now, Agent.",
+			"Clean solve on %s. Outstanding." % module_name,
+			"Module clear! The algorithm worked.",
+		],
+		"time_warning": [
+			"Time is running out, Agent!",
+			"Clock's ticking — move faster!",
+			"We're losing time. Focus on what you know.",
+			"Hurry, Agent! The device won't wait.",
+		],
+		"stability_warning": [
+			"Stability critical! One more mistake could be fatal.",
+			"The bomb is destabilizing. Be precise!",
+			"We can't afford another error, Agent.",
+			"Stability dangerously low. Tread carefully.",
+		],
+		"half_time": [
+			"Half the time gone. Stay sharp, Agent.",
+			"Halfway point. How are those modules looking?",
+			"Clock's at 50%. Keep pushing.",
+		],
+	}
+	var options: Array = lines.get(event, ["Stay focused, Agent."])
+	return options[randi() % options.size()]

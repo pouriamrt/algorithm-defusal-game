@@ -144,6 +144,34 @@ def module_hint(req: ModuleHintRequest):
     return {"text": text}
 
 
+class CommentaryRequest(BaseModel):
+    event: str  # "wrong_action", "module_solved", "time_warning", "stability_warning"
+    module_name: str = ""
+    details: dict[str, Any] = {}
+    city: str = ""
+    wave: int = 1
+
+
+@app.post("/api/commentary")
+def commentary(req: CommentaryRequest):
+    system = (
+        "You are an AI handler guiding Agent CIPHER during a bomb defusal mission. "
+        "Give a SHORT (1 sentence max, under 15 words) real-time reaction to what just happened. "
+        "Be dramatic, urgent, and in-character. Mix encouragement with tension. "
+        "Reference the specific event. Never break character."
+    )
+    event_descriptions = {
+        "wrong_action": f"Agent made a mistake on the {req.module_name} module in {req.city}. Details: {req.details}",
+        "module_solved": f"Agent just solved the {req.module_name} module in {req.city}! Details: {req.details}",
+        "time_warning": f"Timer is running low in {req.city}! Only {req.details.get('seconds_left', '?')}s remaining.",
+        "stability_warning": f"Bomb stability critical in {req.city}! Stability at {req.details.get('stability', '?')}%.",
+        "half_time": f"Half the time is gone in {req.city}. {req.details.get('modules_remaining', '?')} modules remaining.",
+    }
+    user = event_descriptions.get(req.event, f"Event: {req.event} in {req.city}")
+    text = _chat(system, user)
+    return {"text": text}
+
+
 @app.post("/api/results-summary")
 def results_summary(req: ResultsSummaryRequest):
     system = (

@@ -14,10 +14,23 @@ var _module_container: HBoxContainer
 var _bomb_visual: BombVisual
 var _tech_bg: TechBackground
 var _screen_fx: ScreenEffects
+var _commentary_label: Label
+var _commentary_icon: Label
 
 # Pulse animation state
 var _pulse_time: float = 0.0
 var _game_ended: bool = false
+
+# Commentary message queue
+var _commentary_queue: Array[String] = []
+var _commentary_display_timer: float = 0.0
+const COMMENTARY_DISPLAY_DURATION: float = 5.0
+var _commentary_fade_timer: float = 0.0
+
+# Time-based commentary triggers
+var _half_time_triggered: bool = false
+var _time_warning_triggered: bool = false
+var _stability_warning_triggered: bool = false
 
 
 func _ready() -> void:
@@ -137,6 +150,29 @@ func _build_ui() -> void:
 
 	vbox.add_child(HSeparator.new())
 
+	# --- AI Commentary Bar ---
+	var commentary_row := HBoxContainer.new()
+	commentary_row.add_theme_constant_override("separation", 8)
+	commentary_row.custom_minimum_size = Vector2(0, 32)
+	vbox.add_child(commentary_row)
+
+	_commentary_icon = Label.new()
+	_commentary_icon.text = "AI"
+	_commentary_icon.add_theme_font_size_override("font_size", 12)
+	_commentary_icon.add_theme_color_override("font_color", Color("#00e5ff"))
+	_commentary_icon.custom_minimum_size = Vector2(28, 0)
+	commentary_row.add_child(_commentary_icon)
+
+	_commentary_label = Label.new()
+	_commentary_label.text = ""
+	_commentary_label.add_theme_font_size_override("font_size", 15)
+	_commentary_label.add_theme_color_override("font_color", Color("#ffeb3b"))
+	_commentary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_commentary_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	commentary_row.add_child(_commentary_label)
+
+	vbox.add_child(HSeparator.new())
+
 	# --- Bottom bar: status + buttons ---
 	var bottom_row := HBoxContainer.new()
 	bottom_row.add_theme_constant_override("separation", 15)
@@ -201,6 +237,8 @@ func _load_mission_briefing() -> void:
 func _on_llm_response(context: String, text: String) -> void:
 	if context == "mission_briefing":
 		_mission_label.text = text
+	elif context == "commentary":
+		_show_commentary(text)
 
 
 func _exit_tree() -> void:
@@ -253,18 +291,46 @@ func _process(delta: float) -> void:
 	var remaining: int = GameState.modules_total - GameState.modules_solved
 	_status_label.text = "%d module(s) remaining" % remaining
 
+	# Commentary display timer
+	if _commentary_display_timer > 0:
+		_commentary_display_timer -= delta
+		if _commentary_display_timer <= 1.0:
+			# Fade out
+			_commentary_label.add_theme_color_override("font_color", Color("#ffeb3b", _commentary_display_timer))
+		if _commentary_display_timer <= 0:
+			_commentary_label.text = ""
+			# Show next queued message if any
+			if not _commentary_queue.is_empty():
+				var next_msg: String = _commentary_queue.pop_front()
+				_commentary_label.text = next_msg
+				_commentary_label.add_theme_color_override("font_color", Color("#ffeb3b"))
+				_commentary_display_timer = COMMENTARY_DISPLAY_DURATION
+
+	# Time-based commentary triggers
+	if not _half_time_triggered and timer_ratio < 0.5:
+		_half_time_triggered = true
+		_request_commentary("half_time", "", {"modules_remaining": remaining, "seconds_left": int(t)})
+	if not _time_warning_triggered and t < 30.0:
+		_time_warning_triggered = true
+		_request_commentary("time_warning", "", {"seconds_left": int(t)})
+	if not _stability_warning_triggered and stability_ratio < 0.3:
+		_stability_warning_triggered = true
+		_request_commentary("stability_warning", "", {"stability": GameState.stability})
+
 
 func _on_module_solved(module_name: String) -> void:
 	for child in _module_container.get_children():
 		if child is BaseModule and child.module_name == module_name:
 			GameState.record_module_solved(child.get_result())
+			_request_commentary("module_solved", module_name, {"mistakes": child.mistakes})
 			break
 
 
-func _on_wrong_action(_module_name: String) -> void:
+func _on_wrong_action(module_name: String) -> void:
 	GameState.record_wrong_action()
 	_bomb_visual.trigger_shake(6.0)
 	_screen_fx.trigger_damage()
+	_request_commentary("wrong_action", module_name, {"stability": GameState.stability, "mistakes": GameState.mistakes})
 
 
 func _on_stability_changed(new_value: int) -> void:
@@ -321,3 +387,22 @@ func _on_main_menu() -> void:
 func _on_restart() -> void:
 	GameState.is_game_active = false
 	get_tree().change_scene_to_file("res://scenes/bomb_game.tscn")
+
+
+func _request_commentary(event: String, module_name: String, details: Dictionary) -> void:
+	"""Request real-time commentary. Shows fallback immediately, updates with LLM if available."""
+	var fallback: String = LLMService.get_commentary(event, module_name, details)
+	_show_commentary(fallback)
+
+
+func _show_commentary(text: String) -> void:
+	"""Display commentary text in the bar. Queues if a message is already showing."""
+	if _commentary_display_timer > 0 and _commentary_label.text != "":
+		# Current message still showing — queue the new one
+		_commentary_queue.append(text)
+	else:
+		_commentary_label.text = text
+		_commentary_label.add_theme_color_override("font_color", Color("#ffeb3b"))
+		_commentary_display_timer = COMMENTARY_DISPLAY_DURATION
+		# Pulse the AI icon
+		_commentary_icon.add_theme_color_override("font_color", Color("#00e676"))
