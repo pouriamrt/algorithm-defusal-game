@@ -1,0 +1,152 @@
+from __future__ import annotations
+
+import os
+import random
+from typing import Any
+
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
+# Load .env from project root (one level up)
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
+
+app = FastAPI(title="Bomb Defusal LLM Backend")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# --- OpenAI client (lazy init) ---
+
+_client = None
+
+
+def _get_client():
+    global _client
+    if _client is None:
+        api_key = os.environ.get("OPENAI_API_KEY", "")
+        if not api_key or api_key == "your-key-here":
+            raise HTTPException(
+                status_code=503,
+                detail="OPENAI_API_KEY not configured in .env",
+            )
+        from openai import OpenAI
+
+        _client = OpenAI(api_key=api_key)
+    return _client
+
+
+def _chat(system_prompt: str, user_prompt: str) -> str:
+    client = _get_client()
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        max_tokens=300,
+        temperature=0.8,
+    )
+    return response.choices[0].message.content.strip()
+
+
+# --- Models ---
+
+
+class ModuleHintRequest(BaseModel):
+    module_name: str
+    current_state: dict[str, Any] = {}
+
+
+class ResultsSummaryRequest(BaseModel):
+    game_outcome: str
+    timer_remaining: float
+    total_mistakes: int
+    module_results: list[dict[str, Any]]
+
+
+# --- Endpoints ---
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+@app.post("/api/mission-briefing")
+def mission_briefing():
+    system = (
+        "You are a dramatic mission briefing narrator for a bomb defusal game. "
+        "The player is a technician who must solve algorithm-based puzzles to defuse a bomb. "
+        "Write a 2-3 sentence tense, immersive briefing. Keep it short and punchy."
+    )
+    user = "Generate a new mission briefing for the bomb defusal operation."
+    text = _chat(system, user)
+    return {"text": text}
+
+
+@app.post("/api/module-hint")
+def module_hint(req: ModuleHintRequest):
+    module_descriptions = {
+        "Frequency Lock": (
+            "a binary-search puzzle where the player guesses a hidden number 1-100 "
+            "and gets 'too high' or 'too low' feedback"
+        ),
+        "Signal Sorting": (
+            "a sorting puzzle where the player swaps elements to sort an array, "
+            "penalized for swaps that don't reduce inversions"
+        ),
+        "Wire Routing": (
+            "a shortest-path puzzle where the player clicks nodes to build a route "
+            "through a weighted graph from source to target"
+        ),
+    }
+    desc = module_descriptions.get(req.module_name, "an algorithm puzzle")
+    system = (
+        "You are a helpful AI assistant inside a bomb defusal game. "
+        "Give the player a short, encouraging hint (1-2 sentences) for the puzzle. "
+        "Teach the underlying algorithm concept without giving away the answer. "
+        "Be concise and in-character as a support AI."
+    )
+    state_str = ", ".join(f"{k}: {v}" for k, v in req.current_state.items())
+    user = (
+        f"The player is working on the '{req.module_name}' module — {desc}. "
+        f"Current state: {state_str if state_str else 'just started'}. "
+        f"Give a helpful hint."
+    )
+    text = _chat(system, user)
+    return {"text": text}
+
+
+@app.post("/api/results-summary")
+def results_summary(req: ResultsSummaryRequest):
+    system = (
+        "You are an educational debrief AI for a bomb defusal game that teaches algorithms. "
+        "Summarize the player's performance and explain the algorithm behind each module. "
+        "Be encouraging, educational, and concise. Use 3-5 sentences total."
+    )
+    modules_str = "\n".join(
+        f"- {m.get('name', '?')}: {m.get('mistakes', 0)} mistakes, "
+        f"algorithm: {m.get('algorithm', '?')}"
+        for m in req.module_results
+    )
+    user = (
+        f"Game outcome: {req.game_outcome}\n"
+        f"Time remaining: {req.timer_remaining:.1f}s\n"
+        f"Total mistakes: {req.total_mistakes}\n"
+        f"Modules:\n{modules_str}\n\n"
+        f"Give a short educational debrief."
+    )
+    text = _chat(system, user)
+    return {"text": text}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)

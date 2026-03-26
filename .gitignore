@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.venv
+
+# Environment
+.env
+
+# Godot
+.godot/
+*.import
+export_presets.cfg
+*.translation
+
+# OS
+.DS_Store
+Thumbs.db
