@@ -45,6 +45,15 @@ func _build_ui() -> void:
 	_map_draw.draw.connect(_on_map_draw)
 	hbox.add_child(_map_draw)
 
+	# Main menu button (top-left, overlaid on map)
+	var back_btn := Button.new()
+	back_btn.text = "MAIN MENU"
+	back_btn.position = Vector2(15, 15)
+	back_btn.custom_minimum_size = Vector2(120, 32)
+	back_btn.add_theme_font_size_override("font_size", 12)
+	back_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/main_menu.tscn"))
+	add_child(back_btn)
+
 	# RIGHT: Info panel
 	var panel_wrapper := Control.new()
 	panel_wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL

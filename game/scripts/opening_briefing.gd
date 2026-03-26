@@ -34,6 +34,15 @@ func _ready() -> void:
 	_briefing.start_typewriter()
 	_briefing.deploy_pressed.connect(_on_accept)
 
+	# Back to main menu button (top-left corner)
+	var back_btn := Button.new()
+	back_btn.text = "MAIN MENU"
+	back_btn.position = Vector2(15, 15)
+	back_btn.custom_minimum_size = Vector2(120, 32)
+	back_btn.add_theme_font_size_override("font_size", 12)
+	back_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/main_menu.tscn"))
+	add_child(back_btn)
+
 	LLMService.get_mission_briefing()
 	if not LLMService.llm_response_received.is_connected(_on_llm_response):
 		LLMService.llm_response_received.connect(_on_llm_response)

@@ -173,7 +173,8 @@ func _exit_tree() -> void:
 
 
 func _on_replay() -> void:
-	get_tree().change_scene_to_file("res://scenes/bomb_game.tscn")
+	DifficultyManager.reset_campaign()
+	get_tree().change_scene_to_file("res://scenes/opening_briefing.tscn")
 
 
 func _on_main_menu() -> void:
