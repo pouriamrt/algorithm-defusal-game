@@ -236,7 +236,7 @@ func _generate_operations() -> void:
 			_pop_to_output(stack)
 	else:
 		# Staircase: push N, pop 1, push N-1, pop 1, ...
-		# depth=3 → 3+2+1=6 pushes (safe), depth=4 → 10 pushes (exceeds 9 unique values)
+		# depth=3 -> 3+2+1=6 pushes (safe), depth=4 -> 10 pushes (exceeds 9 unique values)
 		var depth: int = 3
 		for level in range(depth, 0, -1):
 			for i in range(level):
@@ -291,9 +291,9 @@ func _display_operations() -> void:
 			lbl.add_theme_color_override("font_color", Color("#00e5ff"))
 		else:
 			if _queue_mode:
-				lbl.text = "DEQUEUE → ?"
+				lbl.text = "DEQUEUE -> ?"
 			else:
-				lbl.text = "POP → ?"
+				lbl.text = "POP -> ?"
 			lbl.add_theme_color_override("font_color", Color("#ffeb3b"))
 		lbl.add_theme_font_size_override("font_size", 13)
 		_ops_container.add_child(lbl)
@@ -447,7 +447,7 @@ func _check_answer() -> void:
 		for child in _ops_container.get_children():
 			if child.text.begins_with(pop_prefix):
 				if pop_idx < _expected_output.size():
-					child.text = "%s → %d" % [pop_prefix, _expected_output[pop_idx]]
+					child.text = "%s -> %d" % [pop_prefix, _expected_output[pop_idx]]
 					child.add_theme_color_override("font_color", Color("#00e676"))
 					pop_idx += 1
 		if _learn_label:

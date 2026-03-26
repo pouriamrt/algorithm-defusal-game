@@ -188,11 +188,11 @@ func _on_button_pressed(index: int) -> void:
 		if inversions_after >= inversions_before:
 			# Non-improving swap — penalty
 			var dir_hint: String = "a smaller value precedes a larger one" if _sort_descending else "a larger value precedes a smaller one"
-			_status_label.text = "Bad swap! Inversions: %d → %d (must decrease). An inversion is any pair where %s." % [inversions_before, inversions_after, dir_hint]
+			_status_label.text = "Bad swap! Inversions: %d -> %d (must decrease). An inversion is any pair where %s." % [inversions_before, inversions_after, dir_hint]
 			_status_label.add_theme_color_override("font_color", Color("#ff1744"))
 			record_wrong_action()
 		else:
-			_status_label.text = "Good swap! Inversions: %d → %d" % [inversions_before, inversions_after]
+			_status_label.text = "Good swap! Inversions: %d -> %d" % [inversions_before, inversions_after]
 			_status_label.add_theme_color_override("font_color", Color("#00e676"))
 
 		# Update buttons with new values

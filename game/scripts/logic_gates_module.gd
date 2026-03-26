@@ -242,7 +242,7 @@ func _update_display() -> void:
 
 	# Gate 1
 	var g1_lbl := Label.new()
-	g1_lbl.text = "Gate1: %s(%d, %d) → %d" % [str(_gates[0]["type"]), int(a), int(b), int(g1)]
+	g1_lbl.text = "Gate1: %s(%d, %d) -> %d" % [str(_gates[0]["type"]), int(a), int(b), int(g1)]
 	g1_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	g1_lbl.add_theme_font_size_override("font_size", 13)
 	g1_lbl.add_theme_color_override("font_color", Color("#00e5ff") if g1 else Color("#888899"))
@@ -251,7 +251,7 @@ func _update_display() -> void:
 	# Gate 2
 	var g2_lbl := Label.new()
 	if str(_gates[1]["type"]) == "NOT":
-		g2_lbl.text = "Gate2: NOT(%d) → %d" % [int(c), int(g2)]
+		g2_lbl.text = "Gate2: NOT(%d) -> %d" % [int(c), int(g2)]
 	else:
 		g2_lbl.text = "Gate2: C = %d" % int(c)
 	g2_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -261,7 +261,7 @@ func _update_display() -> void:
 
 	# Output gate
 	var out_lbl := Label.new()
-	out_lbl.text = "Output: %s(%d, %d) → %d" % [str(_gates[2]["type"]), int(g1), int(g2), int(output)]
+	out_lbl.text = "Output: %s(%d, %d) -> %d" % [str(_gates[2]["type"]), int(g1), int(g2), int(output)]
 	out_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	out_lbl.add_theme_font_size_override("font_size", 14)
 	out_lbl.add_theme_color_override("font_color", Color("#00e676") if output == _target_output else Color("#ff6f00"))

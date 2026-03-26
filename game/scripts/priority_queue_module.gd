@@ -217,7 +217,7 @@ func _update_progress() -> void:
 		var parts: Array[String] = []
 		for idx in _player_order:
 			parts.append("%s(P:%d)" % [str(_tasks[idx]["name"]), int(_tasks[idx]["priority"])])
-		_order_label.text = "Order: " + " → ".join(parts)
+		_order_label.text = "Order: " + " -> ".join(parts)
 	else:
 		_order_label.text = ""
 
