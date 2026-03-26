@@ -1,5 +1,6 @@
 extends Control
 ## Main game scene. Manages timer, stability, module instantiation, and win/lose.
+## Features a visual bomb with burning fuse, explosion, and screen shake.
 
 const FrequencyLockScene := preload("res://modules/frequency_lock_module.tscn")
 const SignalSortingScene := preload("res://modules/signal_sorting_module.tscn")
@@ -12,9 +13,11 @@ var _stability_label: Label
 var _mission_label: Label
 var _status_label: Label
 var _module_container: HBoxContainer
+var _bomb_visual: BombVisual
 
 # Pulse animation state
 var _pulse_time: float = 0.0
+var _game_ended: bool = false
 
 
 func _ready() -> void:
@@ -42,31 +45,30 @@ func _build_ui() -> void:
 	add_child(margin)
 
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 10)
+	vbox.add_theme_constant_override("separation", 8)
 	margin.add_child(vbox)
 
-	# --- Header row ---
+	# --- Header row with bomb visual ---
 	var header_row := HBoxContainer.new()
+	header_row.add_theme_constant_override("separation", 15)
 	vbox.add_child(header_row)
+
+	# Left side: title + stability
+	var left_col := VBoxContainer.new()
+	left_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left_col.add_theme_constant_override("separation", 6)
+	header_row.add_child(left_col)
 
 	var title := Label.new()
 	title.text = "BOMB DEFUSAL SYSTEM"
-	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_font_size_override("font_size", 22)
 	title.add_theme_color_override("font_color", Color("#00e5ff"))
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header_row.add_child(title)
+	left_col.add_child(title)
 
-	_timer_label = Label.new()
-	_timer_label.text = "02:00"
-	_timer_label.add_theme_font_size_override("font_size", 28)
-	_timer_label.add_theme_color_override("font_color", Color("#00e5ff"))
-	_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	header_row.add_child(_timer_label)
-
-	# --- Stability bar ---
+	# Stability bar
 	var stability_row := HBoxContainer.new()
-	stability_row.add_theme_constant_override("separation", 10)
-	vbox.add_child(stability_row)
+	stability_row.add_theme_constant_override("separation", 8)
+	left_col.add_child(stability_row)
 
 	var stab_title := Label.new()
 	stab_title.text = "Stability:"
@@ -77,7 +79,7 @@ func _build_ui() -> void:
 	_stability_bar.min_value = 0
 	_stability_bar.max_value = 100
 	_stability_bar.value = 100
-	_stability_bar.custom_minimum_size = Vector2(300, 20)
+	_stability_bar.custom_minimum_size = Vector2(200, 18)
 	_stability_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_stability_bar.show_percentage = false
 	stability_row.add_child(_stability_bar)
@@ -87,14 +89,38 @@ func _build_ui() -> void:
 	_stability_label.add_theme_color_override("font_color", Color("#00e676"))
 	stability_row.add_child(_stability_label)
 
-	# --- Mission text ---
+	# Mission text
 	_mission_label = Label.new()
 	_mission_label.text = "Loading mission briefing..."
 	_mission_label.add_theme_color_override("font_color", Color("#ff6f00"))
-	_mission_label.add_theme_font_size_override("font_size", 14)
+	_mission_label.add_theme_font_size_override("font_size", 13)
 	_mission_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_mission_label.custom_minimum_size = Vector2(0, 40)
-	vbox.add_child(_mission_label)
+	_mission_label.custom_minimum_size = Vector2(0, 35)
+	left_col.add_child(_mission_label)
+
+	# Center: bomb visual
+	_bomb_visual = BombVisual.new()
+	_bomb_visual.custom_minimum_size = Vector2(180, 160)
+	header_row.add_child(_bomb_visual)
+
+	# Right side: timer
+	var right_col := VBoxContainer.new()
+	right_col.add_theme_constant_override("separation", 4)
+	header_row.add_child(right_col)
+
+	var timer_title := Label.new()
+	timer_title.text = "TIME"
+	timer_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	timer_title.add_theme_color_override("font_color", Color("#555577"))
+	timer_title.add_theme_font_size_override("font_size", 12)
+	right_col.add_child(timer_title)
+
+	_timer_label = Label.new()
+	_timer_label.text = "02:00"
+	_timer_label.add_theme_font_size_override("font_size", 36)
+	_timer_label.add_theme_color_override("font_color", Color("#00e5ff"))
+	_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	right_col.add_child(_timer_label)
 
 	vbox.add_child(HSeparator.new())
 
@@ -133,7 +159,6 @@ func _setup_signals() -> void:
 func _load_mission_briefing() -> void:
 	var fallback := LLMService.get_mission_briefing()
 	_mission_label.text = fallback
-	# If LLM is active, update when async response arrives
 	if not LLMService.llm_response_received.is_connected(_on_llm_response):
 		LLMService.llm_response_received.connect(_on_llm_response)
 
@@ -153,6 +178,9 @@ func _exit_tree() -> void:
 
 
 func _process(delta: float) -> void:
+	if _game_ended:
+		return
+
 	if not GameState.is_game_active:
 		return
 
@@ -165,16 +193,18 @@ func _process(delta: float) -> void:
 	var seconds: int = int(t) % 60
 	_timer_label.text = "%02d:%02d" % [minutes, seconds]
 
+	# Update bomb visual
+	_bomb_visual.timer_ratio = t / GameState.timer_total
+	_bomb_visual.stability_ratio = float(GameState.stability) / float(GameState.stability_max)
+
 	# Timer color states
 	_pulse_time += delta
 	if t > 30.0:
 		_timer_label.add_theme_color_override("font_color", Color("#00e5ff"))
 	elif t > 10.0:
-		# Amber pulse
 		var alpha: float = 0.7 + 0.3 * sin(_pulse_time * 3.0)
 		_timer_label.add_theme_color_override("font_color", Color("#ff6f00", alpha))
 	else:
-		# Red fast pulse
 		var alpha: float = 0.5 + 0.5 * sin(_pulse_time * 8.0)
 		_timer_label.add_theme_color_override("font_color", Color("#ff1744", alpha))
 
@@ -184,7 +214,6 @@ func _process(delta: float) -> void:
 
 
 func _on_module_solved(module_name: String) -> void:
-	# Find the module and get its result
 	for child in _module_container.get_children():
 		if child is BaseModule and child.module_name == module_name:
 			GameState.record_module_solved(child.get_result())
@@ -193,6 +222,8 @@ func _on_module_solved(module_name: String) -> void:
 
 func _on_wrong_action(_module_name: String) -> void:
 	GameState.record_wrong_action()
+	# Screen shake on wrong action
+	_bomb_visual.trigger_shake(6.0)
 
 
 func _on_stability_changed(new_value: int) -> void:
@@ -207,16 +238,22 @@ func _on_stability_changed(new_value: int) -> void:
 
 
 func _on_game_over(outcome: String) -> void:
-	# Short delay for dramatic effect, then transition
-	var timer := get_tree().create_timer(1.5)
+	_game_ended = true
+
 	if outcome == "defused":
 		_status_label.text = "BOMB DEFUSED! Well done, technician."
 		_status_label.add_theme_color_override("font_color", Color("#00e676"))
-	elif outcome == "exploded_timer":
-		_status_label.text = "TIME'S UP — DETONATION!"
-		_status_label.add_theme_color_override("font_color", Color("#ff1744"))
+		_bomb_visual.trigger_defused()
+		# Longer delay to admire the defused bomb
+		await get_tree().create_timer(2.5).timeout
 	else:
-		_status_label.text = "STABILITY CRITICAL — DETONATION!"
+		if outcome == "exploded_timer":
+			_status_label.text = "TIME'S UP — DETONATION!"
+		else:
+			_status_label.text = "STABILITY CRITICAL — DETONATION!"
 		_status_label.add_theme_color_override("font_color", Color("#ff1744"))
-	await timer.timeout
+		_bomb_visual.trigger_explosion()
+		# Wait for explosion animation to play
+		await get_tree().create_timer(2.0).timeout
+
 	get_tree().change_scene_to_file("res://scenes/result_screen.tscn")
