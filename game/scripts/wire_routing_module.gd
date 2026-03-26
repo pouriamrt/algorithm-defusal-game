@@ -76,6 +76,7 @@ func _build_ui() -> void:
 	_path_label.text = "Path: (click nodes)"
 	_path_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_path_label.add_theme_color_override("font_color", Color("#e0e0e0"))
+	_path_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(_path_label)
 
 	# Cost display

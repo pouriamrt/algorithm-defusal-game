@@ -34,6 +34,7 @@ var _learn_label: Label = null
 func _ready() -> void:
 	# Set up base panel styling — subclasses call reset_module() after _build_ui()
 	custom_minimum_size = Vector2(350, 400)
+	clip_contents = true
 
 
 func reset_module() -> void:
