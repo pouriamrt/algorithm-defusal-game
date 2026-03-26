@@ -1,49 +1,13 @@
 extends Control
-## World map screen between waves. Split layout: map on left, intel panel on right.
+## World map screen between waves. Uses a real map texture with interactive overlays.
 
 var _map_draw: Control
+var _map_texture: TextureRect
 var _briefing_text: Label
 var _time: float = 0.0
 var _flight_progress: float = 0.0
 var _flight_animating: bool = true
 var _particles: Array[Dictionary] = []
-
-# Continent polygons (normalized 0-1 coordinates)
-const CONTINENTS: Array = [
-	# North America
-	[Vector2(0.05, 0.22), Vector2(0.08, 0.16), Vector2(0.14, 0.10), Vector2(0.20, 0.08),
-	 Vector2(0.26, 0.12), Vector2(0.28, 0.18), Vector2(0.30, 0.24), Vector2(0.28, 0.30),
-	 Vector2(0.26, 0.36), Vector2(0.22, 0.42), Vector2(0.20, 0.46), Vector2(0.17, 0.48),
-	 Vector2(0.14, 0.46), Vector2(0.10, 0.42), Vector2(0.07, 0.35), Vector2(0.05, 0.28)],
-	# Central America
-	[Vector2(0.17, 0.48), Vector2(0.19, 0.47), Vector2(0.21, 0.50), Vector2(0.20, 0.54),
-	 Vector2(0.18, 0.52)],
-	# South America
-	[Vector2(0.21, 0.52), Vector2(0.25, 0.50), Vector2(0.30, 0.52), Vector2(0.34, 0.56),
-	 Vector2(0.36, 0.62), Vector2(0.37, 0.68), Vector2(0.35, 0.75), Vector2(0.32, 0.80),
-	 Vector2(0.28, 0.84), Vector2(0.26, 0.80), Vector2(0.24, 0.72), Vector2(0.22, 0.64),
-	 Vector2(0.21, 0.58)],
-	# Europe
-	[Vector2(0.44, 0.14), Vector2(0.47, 0.12), Vector2(0.50, 0.13), Vector2(0.53, 0.15),
-	 Vector2(0.55, 0.18), Vector2(0.54, 0.24), Vector2(0.52, 0.28), Vector2(0.50, 0.32),
-	 Vector2(0.47, 0.34), Vector2(0.44, 0.32), Vector2(0.42, 0.28), Vector2(0.43, 0.22)],
-	# Africa
-	[Vector2(0.44, 0.36), Vector2(0.47, 0.34), Vector2(0.52, 0.36), Vector2(0.56, 0.38),
-	 Vector2(0.58, 0.42), Vector2(0.60, 0.48), Vector2(0.60, 0.56), Vector2(0.58, 0.64),
-	 Vector2(0.55, 0.70), Vector2(0.52, 0.74), Vector2(0.48, 0.72), Vector2(0.46, 0.66),
-	 Vector2(0.44, 0.58), Vector2(0.43, 0.48), Vector2(0.44, 0.40)],
-	# Asia
-	[Vector2(0.55, 0.12), Vector2(0.60, 0.08), Vector2(0.68, 0.10), Vector2(0.75, 0.12),
-	 Vector2(0.82, 0.16), Vector2(0.88, 0.20), Vector2(0.90, 0.28), Vector2(0.88, 0.34),
-	 Vector2(0.84, 0.38), Vector2(0.78, 0.42), Vector2(0.72, 0.46), Vector2(0.66, 0.48),
-	 Vector2(0.62, 0.44), Vector2(0.58, 0.38), Vector2(0.56, 0.30), Vector2(0.55, 0.22)],
-	# India
-	[Vector2(0.66, 0.40), Vector2(0.70, 0.42), Vector2(0.72, 0.48), Vector2(0.70, 0.54),
-	 Vector2(0.67, 0.52), Vector2(0.65, 0.46)],
-	# Australia
-	[Vector2(0.82, 0.60), Vector2(0.86, 0.58), Vector2(0.92, 0.60), Vector2(0.95, 0.64),
-	 Vector2(0.94, 0.72), Vector2(0.90, 0.76), Vector2(0.85, 0.74), Vector2(0.82, 0.68)],
-]
 
 
 func _ready() -> void:
@@ -74,14 +38,24 @@ func _build_ui() -> void:
 	add_child(hbox)
 
 	# LEFT: Map area
-	var map_container := PanelContainer.new()
+	var map_container := Control.new()
 	map_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	map_container.size_flags_stretch_ratio = 2.0
 	hbox.add_child(map_container)
 
+	# Map texture background
+	_map_texture = TextureRect.new()
+	_map_texture.texture = load("res://assets/world_map.png")
+	_map_texture.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_map_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	_map_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	map_container.add_child(_map_texture)
+
+	# Overlay for drawing cities, paths, etc.
 	_map_draw = Control.new()
 	_map_draw.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_map_draw.draw.connect(_on_map_draw)
+	_map_draw.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	map_container.add_child(_map_draw)
 
 	# RIGHT: Info panel
@@ -252,60 +226,12 @@ func _on_map_draw() -> void:
 	var d := _map_draw
 	var s: Vector2 = d.size
 
-	# Ocean grid
-	_draw_ocean_grid(d, s)
-	# Continents
-	_draw_continents(d)
-	# Particles
-	_draw_particles(d, s)
-	# Paths and cities
+	# Interactive overlays on top of the map texture
 	var w: int = DifficultyManager.current_wave
 	_draw_completed_paths(d, w)
 	_draw_flight_animation(d, w)
 	_draw_cities(d, w)
-	# Frame
 	_draw_frame(d, s)
-
-
-func _draw_ocean_grid(d: Control, s: Vector2) -> void:
-	var margin: float = 20.0
-	for i in range(9):
-		var y: float = margin + (s.y - margin * 2) * float(i) / 8.0
-		d.draw_line(Vector2(margin, y), Vector2(s.x - margin, y), Color(0.08, 0.15, 0.28, 0.12), 1.0)
-	for i in range(13):
-		var x: float = margin + (s.x - margin * 2) * float(i) / 12.0
-		d.draw_line(Vector2(x, margin), Vector2(x, s.y - margin), Color(0.08, 0.15, 0.28, 0.12), 1.0)
-
-
-func _draw_continents(d: Control) -> void:
-	for continent in CONTINENTS:
-		if continent.size() < 3:
-			continue
-		var points := PackedVector2Array()
-		for p in continent:
-			points.append(_map_pos(p))
-
-		# Filled
-		d.draw_polygon(points, PackedColorArray([Color(0.05, 0.09, 0.16, 0.85)]))
-		# Glow outline
-		for i in range(points.size()):
-			var p1: Vector2 = points[i]
-			var p2: Vector2 = points[(i + 1) % points.size()]
-			d.draw_line(p1, p2, Color(0.1, 0.3, 0.5, 0.12), 5.0)
-			d.draw_line(p1, p2, Color(0.12, 0.35, 0.55, 0.4), 1.5)
-
-
-func _draw_particles(d: Control, s: Vector2) -> void:
-	for p in _particles:
-		p["pos"] = Vector2(
-			fmod(float(p["pos"].x) + sin(_time + float(p["phase"])) * 0.0002, 1.0),
-			fmod(float(p["pos"].y) - float(p["speed"]) * 0.05, 1.0)
-		)
-		if float(p["pos"].y) < 0:
-			p["pos"] = Vector2(p["pos"].x, 1.0)
-		var screen_pos: Vector2 = _map_pos(p["pos"])
-		var alpha: float = 0.12 + 0.08 * sin(_time * 2.0 + float(p["phase"]))
-		d.draw_circle(screen_pos, float(p["size"]), Color(0.15, 0.4, 0.7, alpha))
 
 
 func _draw_completed_paths(d: Control, current_wave: int) -> void:
