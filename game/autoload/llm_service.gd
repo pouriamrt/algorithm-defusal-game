@@ -158,6 +158,21 @@ func _fallback_module_hint(module_name: String) -> String:
 			"Try to find the path where the sum of all edge costs is minimized.",
 			"Compare routes by adding up their total cost, not just counting steps.",
 		],
+		"Pattern Sequence": [
+			"Look at the differences between consecutive numbers — is there a pattern?",
+			"Try checking if the sequence grows by addition, multiplication, or something else.",
+			"Some sequences add the two previous numbers. Others square them. What rule fits?",
+		],
+		"Code Breaker": [
+			"Use exact matches to lock in correct positions, then use partial matches to find misplaced digits.",
+			"If a digit gets 0 exact and 0 partial, eliminate it from all positions.",
+			"Think systematically — change one digit at a time to isolate which positions are correct.",
+		],
+		"Memory Matrix": [
+			"Focus on the overall shape of the pattern, not individual cells.",
+			"Try to remember the pattern as clusters or groups rather than individual positions.",
+			"Look for symmetry or familiar shapes in the highlighted cells.",
+		],
 	}
 	var module_hints: Array = hints.get(module_name, ["Think carefully about your next move."])
 	return module_hints[randi() % module_hints.size()]

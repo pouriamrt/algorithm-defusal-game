@@ -2,9 +2,7 @@ extends Control
 ## Main game scene. Manages timer, stability, module instantiation, and win/lose.
 ## Features a visual bomb with burning fuse, explosion, and screen shake.
 
-const FrequencyLockScene := preload("res://modules/frequency_lock_module.tscn")
-const SignalSortingScene := preload("res://modules/signal_sorting_module.tscn")
-const WireRoutingScene := preload("res://modules/wire_routing_module.tscn")
+# Module scenes loaded dynamically per city from WaveData
 
 # UI references
 var _timer_label: Label
@@ -157,8 +155,9 @@ func _apply_wave_theme() -> void:
 
 
 func _instantiate_modules() -> void:
-	var modules: Array[PackedScene] = [FrequencyLockScene, SignalSortingScene, WireRoutingScene]
-	for scene in modules:
+	var module_paths: Array = WaveData.get_module_scenes(GameState.current_wave)
+	for path in module_paths:
+		var scene: PackedScene = load(str(path))
 		var module: BaseModule = scene.instantiate()
 		module.module_solved.connect(_on_module_solved)
 		module.wrong_action.connect(_on_wrong_action)
