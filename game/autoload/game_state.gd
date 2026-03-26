@@ -1,6 +1,7 @@
 extends Node
 ## Global game state singleton. Persists across scene transitions.
 ## Accepts difficulty params from DifficultyManager for wave-based scaling.
+## Also handles global input like fullscreen toggle (F11).
 
 signal stability_changed(new_value: int)
 signal timer_updated(remaining: float)
@@ -94,3 +95,12 @@ func tick_timer(delta: float) -> void:
 		game_outcome = "exploded_timer"
 		is_game_active = false
 		game_over.emit(game_outcome)
+
+
+func _input(event: InputEvent) -> void:
+	# F11 toggles fullscreen
+	if event is InputEventKey and event.pressed and event.keycode == KEY_F11:
+		if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN:
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+		else:
+			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
