@@ -200,6 +200,11 @@ func _fallback_module_hint(module_name: String) -> String:
 			"Trace through each operation in order. After each PUSH, imagine placing a plate on a stack.",
 			"When you see POP, the answer is always the value on top — the last thing pushed.",
 		],
+		"Data Queue": [
+			"A queue is First In, First Out. The EARLIEST enqueued item gets dequeued first.",
+			"Think of a line at a store — the first person in line is the first served.",
+			"Trace through operations: ENQUEUE adds to the back, DEQUEUE removes from the front.",
+		],
 		"Priority Queue": [
 			"Check the mode! MAX-QUEUE = highest first. MIN-QUEUE = lowest first.",
 			"Unlike a regular queue (FIFO), a priority queue serves by priority value, not arrival order.",

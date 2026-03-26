@@ -6,6 +6,7 @@ var _target_decimal: int = 0
 var _num_bits: int = 6
 var _current_bits: Array[bool] = []
 var _attempt_count: int = 0
+var _decode_mode: bool = false
 
 # UI references
 var _bit_buttons: Array[Button] = []
@@ -14,6 +15,7 @@ var _target_label: Label
 var _current_label: Label
 var _feedback_label: Label
 var _submit_btn: Button
+var _answer_input: SpinBox = null
 
 
 func _ready() -> void:
@@ -102,6 +104,13 @@ func _build_ui() -> void:
 	_submit_btn.pressed.connect(_on_submit)
 	btn_row.add_child(_submit_btn)
 
+	_answer_input = SpinBox.new()
+	_answer_input.min_value = 0
+	_answer_input.max_value = 255
+	_answer_input.custom_minimum_size = Vector2(100, 0)
+	_answer_input.visible = false
+	btn_row.add_child(_answer_input)
+
 	# Feedback
 	_feedback_label = Label.new()
 	_feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -138,23 +147,63 @@ func reset_module() -> void:
 	for i in range(_num_bits):
 		_current_bits.append(false)
 
-	# Scale target with wave difficulty
-	var max_val: int = int(pow(2, _num_bits)) - 1
-	_target_decimal = randi_range(1, max_val)
+	# Decide mode: decode variant on waves >= 3 with 40% chance
+	_decode_mode = GameState.current_wave >= 3 and randf() < 0.4
 
-	if _target_label:
+	if not _target_label:
+		return
+
+	_learn_label.text = ""
+	_hint_label.text = ""
+	_submit_btn.disabled = false
+	_feedback_label.add_theme_color_override("font_color", Color("#e0e0e0"))
+
+	if _decode_mode:
+		# --- Decode mode: player reads binary and types the decimal ---
+		_answer_input.visible = true
+		_answer_input.value = 0
+		_submit_btn.text = "SUBMIT"
+
+		# Pre-set random bits (ensure at least one is ON)
+		for i in range(_num_bits):
+			_current_bits[i] = randf() < 0.5
+		var any_on: bool = false
+		for b in _current_bits:
+			if b:
+				any_on = true
+				break
+		if not any_on:
+			_current_bits[randi_range(0, _num_bits - 1)] = true
+
+		_target_decimal = _bits_to_decimal()
+		_target_label.text = "DECODE THIS BINARY"
+		_current_label.text = "Your answer:"
+		_feedback_label.text = "Read the binary and type its decimal value"
+
+		# Disable bit buttons so the player cannot toggle them
+		for i in range(_num_bits):
+			_bit_buttons[i].disabled = true
+		_update_buttons()
+	else:
+		# --- Normal encode mode ---
+		_answer_input.visible = false
+		_submit_btn.text = "DECODE"
+
+		var max_val: int = int(pow(2, _num_bits)) - 1
+		_target_decimal = randi_range(1, max_val)
+
 		_target_label.text = "TARGET: %d" % _target_decimal
 		_current_label.text = "Current: 0"
 		_feedback_label.text = "Toggle bits to build the target number"
-		_feedback_label.add_theme_color_override("font_color", Color("#e0e0e0"))
-		_learn_label.text = ""
-		_hint_label.text = ""
-		_submit_btn.disabled = false
+
+		# Enable bit buttons
+		for i in range(_num_bits):
+			_bit_buttons[i].disabled = false
 		_update_buttons()
 
 
 func _on_bit_toggle(index: int) -> void:
-	if is_solved:
+	if is_solved or _decode_mode:
 		return
 	_start_timer_if_needed()
 	_current_bits[index] = not _current_bits[index]
@@ -170,11 +219,12 @@ func _update_buttons() -> void:
 		else:
 			_bit_buttons[i].text = "0"
 			_bit_buttons[i].add_theme_color_override("font_color", Color("#555566"))
-	_current_label.text = "Current: %d" % decimal
-	if decimal == _target_decimal:
-		_current_label.add_theme_color_override("font_color", Color("#00e676"))
-	else:
-		_current_label.add_theme_color_override("font_color", Color("#e0e0e0"))
+	if not _decode_mode:
+		_current_label.text = "Current: %d" % decimal
+		if decimal == _target_decimal:
+			_current_label.add_theme_color_override("font_color", Color("#00e676"))
+		else:
+			_current_label.add_theme_color_override("font_color", Color("#e0e0e0"))
 
 
 func _bits_to_decimal() -> int:
@@ -188,26 +238,32 @@ func _bits_to_decimal() -> int:
 func _on_submit() -> void:
 	if is_solved:
 		return
+	_start_timer_if_needed()
 	_attempt_count += 1
+
+	var breakdown: String = _build_breakdown()
+
+	if _decode_mode:
+		_handle_decode_submit(breakdown)
+	else:
+		_handle_encode_submit(breakdown)
+
+
+func _build_breakdown() -> String:
+	var parts: PackedStringArray = PackedStringArray()
+	for i in range(_num_bits):
+		if _current_bits[i]:
+			parts.append("%d" % int(pow(2, _num_bits - 1 - i)))
+	return " + ".join(parts)
+
+
+func _handle_encode_submit(breakdown: String) -> void:
 	var current: int = _bits_to_decimal()
 
 	if current == _target_decimal:
 		_feedback_label.text = "CIPHER DECODED!"
 		_feedback_label.add_theme_color_override("font_color", Color("#00e676"))
 		_submit_btn.disabled = true
-		# Show binary breakdown
-		var breakdown: String = ""
-		for i in range(_num_bits):
-			if _current_bits[i]:
-				breakdown += "%d" % int(pow(2, _num_bits - 1 - i))
-				if i < _num_bits - 1:
-					var has_more: bool = false
-					for j in range(i + 1, _num_bits):
-						if _current_bits[j]:
-							has_more = true
-							break
-					if has_more:
-						breakdown += " + "
 		if _learn_label:
 			_learn_label.text = "Key Insight: %d = %s. Binary is how computers store ALL data — each bit doubles the range." % [_target_decimal, breakdown]
 		complete_module()
@@ -221,6 +277,22 @@ func _on_submit() -> void:
 		record_wrong_action()
 
 
+func _handle_decode_submit(breakdown: String) -> void:
+	var player_answer: int = int(_answer_input.value)
+
+	if player_answer == _target_decimal:
+		_feedback_label.text = "CIPHER DECODED!"
+		_feedback_label.add_theme_color_override("font_color", Color("#00e676"))
+		_submit_btn.disabled = true
+		if _learn_label:
+			_learn_label.text = "Key Insight: Reading binary is the reverse of writing it. %d in binary is %s. Each 1-bit adds its power of 2 to the total." % [_target_decimal, breakdown]
+		complete_module()
+	else:
+		_feedback_label.text = "Wrong! The binary shown equals %d. Remember: add up the powers of 2 for each ON bit." % _target_decimal
+		_feedback_label.add_theme_color_override("font_color", Color("#ff1744"))
+		record_wrong_action()
+
+
 func get_module_state() -> Dictionary:
 	return {
 		"module_name": module_name,
@@ -228,4 +300,5 @@ func get_module_state() -> Dictionary:
 		"current": _bits_to_decimal(),
 		"attempts": _attempt_count,
 		"mistakes": mistakes,
+		"decode_mode": _decode_mode,
 	}

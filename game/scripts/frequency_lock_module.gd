@@ -6,6 +6,8 @@ var _target: int = 0
 var _guess_count: int = 0
 var _range_low: int = 1
 var _range_high: int = 100
+var _hot_cold_mode: bool = false
+var _prev_distance: int = -1
 
 # UI references (built in _ready)
 var _spinbox: SpinBox
@@ -115,10 +117,15 @@ func reset_module() -> void:
 	_guess_count = 0
 	_range_low = 1
 	_range_high = GameState.freq_range_max
+	_hot_cold_mode = GameState.current_wave >= 4 and randf() < 0.4
+	_prev_distance = -1
 	if _feedback_label:
 		_feedback_label.text = "Find the safe frequency"
 		_feedback_label.add_theme_color_override("font_color", Color("#e0e0e0"))
-		_range_label.text = "Range: [1 — %d]" % GameState.freq_range_max
+		if _hot_cold_mode:
+			_range_label.text = "Mode: HOT/COLD — distance only, no direction!"
+		else:
+			_range_label.text = "Range: [1 — %d]" % GameState.freq_range_max
 		_guess_count_label.text = "Guesses: 0"
 		_hint_label.text = ""
 		_spinbox.max_value = GameState.freq_range_max
@@ -140,8 +147,13 @@ func _on_submit() -> void:
 		_feedback_label.add_theme_color_override("font_color", Color("#00e676"))
 		_submit_btn.disabled = true
 		if _learn_label:
-			_learn_label.text = "Key Insight: Binary search finds any value in a sorted range of N items in at most log2(N) guesses. You used %d guesses (optimal: %d)." % [_guess_count, ceili(log(float(GameState.freq_range_max)) / log(2.0))]
+			if _hot_cold_mode:
+				_learn_label.text = "Key Insight: Without direction, you triangulated by comparing distances — similar to gradient descent. Binary search is faster when you have ordered comparisons. You used %d guesses." % _guess_count
+			else:
+				_learn_label.text = "Key Insight: Binary search finds any value in a sorted range of N items in at most log2(N) guesses. You used %d guesses (optimal: %d)." % [_guess_count, ceili(log(float(GameState.freq_range_max)) / log(2.0))]
 		complete_module()
+	elif _hot_cold_mode:
+		_handle_hot_cold_guess(guess)
 	elif guess < _target:
 		_feedback_label.text = "TOO LOW ↑  (eliminated %d values below)" % (guess - _range_low + 1)
 		_feedback_label.add_theme_color_override("font_color", Color("#42a5f5"))
@@ -156,6 +168,51 @@ func _on_submit() -> void:
 		record_wrong_action()
 
 
+func _get_heat_label(distance: int) -> String:
+	if distance <= 3:
+		return "SCORCHING"
+	elif distance <= 10:
+		return "HOT"
+	elif distance <= 25:
+		return "WARM"
+	elif distance <= 50:
+		return "COOL"
+	else:
+		return "COLD"
+
+
+func _get_heat_color(distance: int) -> Color:
+	if distance <= 3:
+		return Color("#ff1744")
+	elif distance <= 10:
+		return Color("#ff5722")
+	elif distance <= 25:
+		return Color("#ff9800")
+	elif distance <= 50:
+		return Color("#42a5f5")
+	else:
+		return Color("#1565c0")
+
+
+func _handle_hot_cold_guess(guess: int) -> void:
+	var distance: int = absi(guess - _target)
+	var heat: String = _get_heat_label(distance)
+	var feedback_text: String = "%s! (distance: %s)" % [heat, "very close" if distance <= 3 else str(distance)]
+
+	if _prev_distance >= 0:
+		if distance < _prev_distance:
+			feedback_text += " — getting warmer!"
+		elif distance > _prev_distance:
+			feedback_text += " — getting colder!"
+		else:
+			feedback_text += " — same distance!"
+
+	_feedback_label.text = feedback_text
+	_feedback_label.add_theme_color_override("font_color", _get_heat_color(distance))
+	_prev_distance = distance
+	record_wrong_action()
+
+
 func get_module_state() -> Dictionary:
 	return {
 		"module_name": module_name,
@@ -163,4 +220,5 @@ func get_module_state() -> Dictionary:
 		"range_low": _range_low,
 		"range_high": _range_high,
 		"mistakes": mistakes,
+		"hot_cold_mode": _hot_cold_mode,
 	}
