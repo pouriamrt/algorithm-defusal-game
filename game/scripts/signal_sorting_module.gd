@@ -3,6 +3,7 @@ extends BaseModule
 ## Player swaps elements to sort an array. Non-improving swaps are penalized.
 
 var _num_elements: int = 6
+var _sort_descending: bool = false
 
 var _values: Array[int] = []
 var _selected_index: int = -1
@@ -41,7 +42,7 @@ func _build_ui() -> void:
 
 	# Algorithm intro
 	var intro := Label.new()
-	intro.text = "SORTING: Arrange values in order by swapping pairs. Each swap should reduce the number of 'inversions' (out-of-order pairs)."
+	intro.text = "SORTING: Arrange values in order by swapping pairs. Each swap should reduce inversions (out-of-order pairs). Sort direction varies!"
 	intro.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	intro.add_theme_color_override("font_color", Color("#aabbcc"))
 	intro.add_theme_font_size_override("font_size", 11)
@@ -50,7 +51,7 @@ func _build_ui() -> void:
 
 	# Instructions
 	var instr := Label.new()
-	instr.text = "Click two values to swap them.\nSort ascending to defuse."
+	instr.text = "Click two values to swap them."
 	instr.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	instr.add_theme_color_override("font_color", Color("#e0e0e0"))
 	instr.add_theme_font_size_override("font_size", 12)
@@ -102,12 +103,14 @@ func _build_ui() -> void:
 func reset_module() -> void:
 	super.reset_module()
 	_num_elements = GameState.sort_elements
+	_sort_descending = randf() < 0.3
 	_selected_index = -1
 	_swap_count = 0
 	_generate_values()
 	_rebuild_buttons()
 	if _status_label:
-		_status_label.text = "Select two values to swap"
+		var dir_text: String = "descending (largest first)" if _sort_descending else "ascending (smallest first)"
+		_status_label.text = "Sort %s to defuse" % dir_text
 		_status_label.add_theme_color_override("font_color", Color("#e0e0e0"))
 		_swap_count_label.text = "Swaps: 0"
 		_hint_label.text = ""
@@ -118,10 +121,12 @@ func _generate_values() -> void:
 	_values.clear()
 	for i in range(_num_elements):
 		_values.append(randi_range(10, 99))
-	# Ensure not already sorted
-	var sorted_copy := _values.duplicate()
-	sorted_copy.sort()
-	while _values == sorted_copy:
+	# Ensure not already in target order
+	var target := _values.duplicate()
+	target.sort()
+	if _sort_descending:
+		target.reverse()
+	while _values == target:
 		_values.shuffle()
 
 
@@ -147,6 +152,8 @@ func _update_button_colors() -> void:
 	"""Highlight sorted-in-place elements green, selected element cyan."""
 	var sorted_copy := _values.duplicate()
 	sorted_copy.sort()
+	if _sort_descending:
+		sorted_copy.reverse()
 
 	for i in range(_buttons.size()):
 		if i == _selected_index:
@@ -186,7 +193,8 @@ func _on_button_pressed(index: int) -> void:
 
 		if inversions_after >= inversions_before:
 			# Non-improving swap — penalty
-			_status_label.text = "Bad swap! Inversions: %d → %d (must decrease). An inversion is any pair where a larger value precedes a smaller one." % [inversions_before, inversions_after]
+			var dir_hint: String = "a smaller value precedes a larger one" if _sort_descending else "a larger value precedes a smaller one"
+			_status_label.text = "Bad swap! Inversions: %d → %d (must decrease). An inversion is any pair where %s." % [inversions_before, inversions_after, dir_hint]
 			_status_label.add_theme_color_override("font_color", Color("#ff1744"))
 			record_wrong_action()
 		else:
@@ -203,24 +211,33 @@ func _on_button_pressed(index: int) -> void:
 			_status_label.text = "SIGNAL SORTED!"
 			_status_label.add_theme_color_override("font_color", Color("#00e676"))
 			if _learn_label:
-				_learn_label.text = "Key Insight: Sorting algorithms work by systematically reducing inversions. You sorted %d elements in %d swaps." % [_num_elements, _swap_count]
+				var dir_name: String = "descending" if _sort_descending else "ascending"
+				_learn_label.text = "Key Insight: Sorting algorithms work by systematically reducing inversions. You sorted %d elements %s in %d swaps." % [_num_elements, dir_name, _swap_count]
 			complete_module()
 
 
 func _count_inversions() -> int:
-	"""Count the number of inversions in the array."""
+	"""Count the number of inversions relative to the target sort direction."""
 	var count := 0
 	for i in range(_values.size()):
 		for j in range(i + 1, _values.size()):
-			if _values[i] > _values[j]:
-				count += 1
+			if _sort_descending:
+				if _values[i] < _values[j]:
+					count += 1
+			else:
+				if _values[i] > _values[j]:
+					count += 1
 	return count
 
 
 func _is_sorted() -> bool:
 	for i in range(_values.size() - 1):
-		if _values[i] > _values[i + 1]:
-			return false
+		if _sort_descending:
+			if _values[i] < _values[i + 1]:
+				return false
+		else:
+			if _values[i] > _values[i + 1]:
+				return false
 	return true
 
 
@@ -230,5 +247,6 @@ func get_module_state() -> Dictionary:
 		"values": _values.duplicate(),
 		"inversions": _count_inversions(),
 		"swaps": _swap_count,
+		"sort_direction": "descending" if _sort_descending else "ascending",
 		"mistakes": mistakes,
 	}

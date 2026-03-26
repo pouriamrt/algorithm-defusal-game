@@ -7,6 +7,7 @@ var _tasks: Array[Dictionary] = []  # {name, priority, processed}
 var _correct_order: Array[int] = []  # indices in priority order
 var _player_order: Array[int] = []
 var _next_expected: int = 0
+var _min_priority_mode: bool = false
 
 # UI references
 var _task_buttons: Array[Button] = []
@@ -40,7 +41,7 @@ func _build_ui() -> void:
 	vbox.add_child(HSeparator.new())
 
 	var intro := Label.new()
-	intro.text = "PRIORITY SCHEDULING: Process tasks from HIGHEST priority to LOWEST. In a priority queue, the most urgent item is always served first."
+	intro.text = "PRIORITY SCHEDULING: Process tasks by priority. Max-queue = highest first. Min-queue = lowest first. The mode varies!"
 	intro.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	intro.add_theme_color_override("font_color", Color("#aabbcc"))
 	intro.add_theme_font_size_override("font_size", 11)
@@ -105,9 +106,11 @@ func reset_module() -> void:
 	_correct_order.clear()
 	_player_order.clear()
 	_next_expected = 0
+	_min_priority_mode = randf() < 0.35
 	_generate_tasks()
 	if _feedback_label:
-		_feedback_label.text = "Click tasks in priority order (highest first)"
+		var mode_text: String = "lowest first (MIN-QUEUE)" if _min_priority_mode else "highest first (MAX-QUEUE)"
+		_feedback_label.text = "Click tasks in priority order: %s" % mode_text
 		_feedback_label.add_theme_color_override("font_color", Color("#e0e0e0"))
 		_learn_label.text = ""
 		_hint_label.text = ""
@@ -132,14 +135,20 @@ func _generate_tasks() -> void:
 			"processed": false,
 		})
 
-	# Build correct order (highest priority first)
+	# Build correct order based on mode
 	var indexed: Array[Dictionary] = []
 	for i in range(_tasks.size()):
 		indexed.append({"index": i, "priority": int(_tasks[i]["priority"])})
-	# Sort by priority descending
-	indexed.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		return int(a["priority"]) > int(b["priority"])
-	)
+	if _min_priority_mode:
+		# Sort by priority ascending (lowest first)
+		indexed.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+			return int(a["priority"]) < int(b["priority"])
+		)
+	else:
+		# Sort by priority descending (highest first)
+		indexed.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+			return int(a["priority"]) > int(b["priority"])
+		)
 	for entry in indexed:
 		_correct_order.append(int(entry["index"]))
 
@@ -183,17 +192,21 @@ func _on_task_clicked(index: int) -> void:
 			_feedback_label.text = "QUEUE CLEARED!"
 			_feedback_label.add_theme_color_override("font_color", Color("#00e676"))
 			if _learn_label:
-				_learn_label.text = "Key Insight: A priority queue always extracts the highest-priority item. Implemented as a binary heap, this takes O(log n) per operation. Used in Dijkstra's algorithm, OS scheduling, and event systems."
+				var mode_name: String = "min-priority queue (lowest first)" if _min_priority_mode else "max-priority queue (highest first)"
+				_learn_label.text = "Key Insight: A %s extracts items by priority. Implemented as a binary heap, O(log n) per operation. Used in Dijkstra's, OS scheduling, and event systems." % mode_name
 			complete_module()
 		else:
-			var next_task: Dictionary = _tasks[_correct_order[_next_expected]]
-			_feedback_label.text = "Correct! Next: find the highest remaining priority."
+			var next_hint: String = "lowest" if _min_priority_mode else "highest"
+			_feedback_label.text = "Correct! Next: find the %s remaining priority." % next_hint
 			_feedback_label.add_theme_color_override("font_color", Color("#00e676"))
 	else:
 		# Wrong — tell them why
 		var clicked_priority: int = int(_tasks[index]["priority"])
 		var expected_priority: int = int(_tasks[expected_index]["priority"])
-		_feedback_label.text = "Wrong! P:%d is not the highest. P:%d should go first (higher priority = processed first)." % [clicked_priority, expected_priority]
+		if _min_priority_mode:
+			_feedback_label.text = "Wrong! P:%d is not the lowest. P:%d should go first (MIN-QUEUE: lower priority = processed first)." % [clicked_priority, expected_priority]
+		else:
+			_feedback_label.text = "Wrong! P:%d is not the highest. P:%d should go first (MAX-QUEUE: higher priority = processed first)." % [clicked_priority, expected_priority]
 		_feedback_label.add_theme_color_override("font_color", Color("#ff1744"))
 		record_wrong_action()
 

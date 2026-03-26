@@ -4,6 +4,7 @@ extends Control
 var _outcome_label: Label
 var _stats_label: Label
 var _explanation_label: Label
+var _replay_btn: Button
 
 
 func _ready() -> void:
@@ -101,12 +102,12 @@ func _build_ui() -> void:
 	btn_row.add_theme_constant_override("separation", 20)
 	vbox.add_child(btn_row)
 
-	var replay_btn := Button.new()
-	replay_btn.text = "REPLAY MISSION"
-	replay_btn.custom_minimum_size = Vector2(200, 45)
-	replay_btn.add_theme_font_size_override("font_size", 18)
-	replay_btn.pressed.connect(_on_replay)
-	btn_row.add_child(replay_btn)
+	_replay_btn = Button.new()
+	_replay_btn.text = "REPLAY MISSION"
+	_replay_btn.custom_minimum_size = Vector2(200, 45)
+	_replay_btn.add_theme_font_size_override("font_size", 18)
+	_replay_btn.pressed.connect(_on_replay)
+	btn_row.add_child(_replay_btn)
 
 	var menu_btn := Button.new()
 	menu_btn.text = "MAIN MENU"
@@ -124,6 +125,7 @@ func _display_results() -> void:
 	if waves_survived >= WaveData.TOTAL_WAVES:
 		_outcome_label.text = "WORLD SAVED — ALL THREATS NEUTRALIZED"
 		_outcome_label.add_theme_color_override("font_color", Color("#00e676"))
+		_replay_btn.text = "NEW CAMPAIGN"
 	else:
 		match GameState.game_outcome:
 			"defused":
@@ -173,8 +175,13 @@ func _exit_tree() -> void:
 
 
 func _on_replay() -> void:
-	# Restart the wave the player failed on (don't reset campaign)
-	get_tree().change_scene_to_file("res://scenes/bomb_game.tscn")
+	var stats: Dictionary = DifficultyManager.get_total_stats()
+	if int(stats["waves_survived"]) >= WaveData.TOTAL_WAVES:
+		# Victory screen — start a new campaign
+		get_tree().change_scene_to_file("res://scenes/opening_briefing.tscn")
+	else:
+		# Failure — restart the failed wave (don't reset campaign)
+		get_tree().change_scene_to_file("res://scenes/bomb_game.tscn")
 
 
 func _on_main_menu() -> void:

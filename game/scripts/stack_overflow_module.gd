@@ -172,31 +172,72 @@ func reset_module() -> void:
 
 
 func _generate_operations() -> void:
-	# Create a mix of PUSH and POP operations
+	# Choose a pattern style for more varied challenges
+	var pattern: int = randi() % 4
 	var stack: Array[int] = []
 	var values_used: Array[int] = []
-	var num_ops: int = randi_range(6, 8)
 
-	for i in range(num_ops):
-		if stack.is_empty() or (randf() < 0.6 and i < num_ops - 2):
-			# PUSH
-			var val: int = randi_range(1, 9)
-			while val in values_used:
-				val = randi_range(1, 9)
-			values_used.append(val)
-			stack.append(val)
-			_operations.append({"type": "push", "value": val})
-		else:
-			# POP
-			var popped: int = stack.pop_back()
-			_expected_output.append(popped)
-			_operations.append({"type": "pop", "value": popped})
+	if pattern == 0:
+		# Classic random mix (original)
+		var num_ops: int = randi_range(6, 8)
+		for i in range(num_ops):
+			if stack.is_empty() or (randf() < 0.6 and i < num_ops - 2):
+				_push_unique(stack, values_used)
+			else:
+				_pop_to_output(stack)
+	elif pattern == 1:
+		# Burst push then burst pop (tests deep stack tracing)
+		var burst: int = randi_range(3, 5)
+		for i in range(burst):
+			_push_unique(stack, values_used)
+		for i in range(randi_range(1, 2)):
+			_pop_to_output(stack)
+		for i in range(randi_range(1, 3)):
+			_push_unique(stack, values_used)
+		while not stack.is_empty():
+			_pop_to_output(stack)
+	elif pattern == 2:
+		# Interleaved: push-push-pop, push-push-pop, ... (tests LIFO intuition)
+		for _round in range(randi_range(2, 3)):
+			_push_unique(stack, values_used)
+			_push_unique(stack, values_used)
+			_pop_to_output(stack)
+		# Drain remaining
+		while not stack.is_empty():
+			_pop_to_output(stack)
+	else:
+		# Staircase: push N, pop 1, push N-1, pop 1, ...
+		# depth=3 → 3+2+1=6 pushes (safe), depth=4 → 10 pushes (exceeds 9 unique values)
+		var depth: int = 3
+		for level in range(depth, 0, -1):
+			for i in range(level):
+				_push_unique(stack, values_used)
+			_pop_to_output(stack)
+		while not stack.is_empty():
+			_pop_to_output(stack)
 
-	# Ensure at least 2 pops
-	while stack.size() > 0 and _expected_output.size() < 3:
-		var popped: int = stack.pop_back()
-		_expected_output.append(popped)
-		_operations.append({"type": "pop", "value": popped})
+	# Guarantee at least 2 pops
+	while _expected_output.size() < 2 and not stack.is_empty():
+		_pop_to_output(stack)
+
+
+func _push_unique(stack: Array[int], values_used: Array[int]) -> void:
+	if values_used.size() >= 9:
+		return  # All unique values exhausted — prevent infinite loop
+	var val: int = randi_range(1, 9)
+	while val in values_used:
+		val = randi_range(1, 9)
+	values_used.append(val)
+	stack.append(val)
+	_operations.append({"type": "push", "value": val})
+
+
+func _pop_to_output(stack: Array[int]) -> void:
+	if stack.is_empty():
+		return
+	var popped: int = stack.pop_back()
+	_expected_output.append(popped)
+	_operations.append({"type": "pop", "value": popped})
 
 
 func _display_operations() -> void:

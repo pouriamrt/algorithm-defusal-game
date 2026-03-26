@@ -43,7 +43,7 @@ func _build_ui() -> void:
 	vbox.add_child(HSeparator.new())
 
 	var intro := Label.new()
-	intro.text = "BOOLEAN LOGIC: AND outputs 1 only if BOTH inputs are 1. OR outputs 1 if ANY input is 1. NOT flips the value. Set inputs to produce the target."
+	intro.text = "BOOLEAN LOGIC: AND = both 1. OR = any 1. XOR = exactly one 1. NAND = NOT AND. NOT flips. Set inputs to produce the target."
 	intro.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	intro.add_theme_color_override("font_color", Color("#aabbcc"))
 	intro.add_theme_font_size_override("font_size", 11)
@@ -151,14 +151,14 @@ func reset_module() -> void:
 
 func _generate_circuit() -> void:
 	_gates.clear()
-	var gate_types := ["AND", "OR"]
+	var gate_types := ["AND", "OR", "XOR", "NAND"]
 
 	# Build a 2-layer circuit:
 	# Layer 1: gate1 = A op B, gate2 = NOT C (or just C)
 	# Layer 2: output = gate1 op gate2
-	var gate1_type: String = gate_types[randi() % 2]
+	var gate1_type: String = gate_types[randi() % gate_types.size()]
 	var use_not: bool = randf() < 0.5
-	var gate2_type: String = gate_types[randi() % 2]
+	var gate2_type: String = gate_types[randi() % gate_types.size()]
 
 	_gates.append({"type": gate1_type, "inputs": "A, B", "desc": "%s(A, B)" % gate1_type})
 	if use_not:
@@ -167,17 +167,20 @@ func _generate_circuit() -> void:
 		_gates.append({"type": "PASS", "inputs": "C", "desc": "C"})
 	_gates.append({"type": gate2_type, "inputs": "G1, G2", "desc": "%s(Gate1, Gate2)" % gate2_type})
 
-	# Find a valid target that has at least one solution
-	_target_output = true
-	var has_solution: bool = false
+	# Find a valid target — try TRUE first, then FALSE
+	_target_output = randf() < 0.5
+	var has_solution: bool = _has_valid_input(_target_output)
+	if not has_solution:
+		_target_output = not _target_output
+
+
+func _has_valid_input(target: bool) -> bool:
 	for a in [false, true]:
 		for b in [false, true]:
 			for c in [false, true]:
-				if _evaluate_circuit(a, b, c) == _target_output:
-					has_solution = true
-					break
-	if not has_solution:
-		_target_output = false
+				if _evaluate_circuit(a, b, c) == target:
+					return true
+	return false
 
 
 func _evaluate_circuit(a: bool, b: bool, c: bool) -> bool:
@@ -196,6 +199,8 @@ func _apply_gate(gate_type: String, a: bool, b: bool) -> bool:
 	match gate_type:
 		"AND": return a and b
 		"OR": return a or b
+		"XOR": return a != b
+		"NAND": return not (a and b)
 		"NOT": return not a
 		_: return a
 
@@ -294,10 +299,17 @@ func _on_submit() -> void:
 		if str(_gates[1]["type"]) == "NOT":
 			g2 = not c
 		var gate_name: String = str(_gates[2]["type"])
-		if gate_name == "AND":
-			_feedback_label.text = "Output is 0. AND needs BOTH Gate1 and Gate2 to be 1. Currently: Gate1=%d, Gate2=%d." % [int(g1), int(g2)]
-		else:
-			_feedback_label.text = "Output is 0. OR needs at LEAST ONE of Gate1 or Gate2 to be 1. Currently: Gate1=%d, Gate2=%d." % [int(g1), int(g2)]
+		match gate_name:
+			"AND":
+				_feedback_label.text = "AND needs BOTH inputs = 1. Gate1=%d, Gate2=%d." % [int(g1), int(g2)]
+			"OR":
+				_feedback_label.text = "OR needs at LEAST ONE input = 1. Gate1=%d, Gate2=%d." % [int(g1), int(g2)]
+			"XOR":
+				_feedback_label.text = "XOR needs EXACTLY ONE input = 1 (not both, not neither). Gate1=%d, Gate2=%d." % [int(g1), int(g2)]
+			"NAND":
+				_feedback_label.text = "NAND outputs 0 only when BOTH inputs = 1. Gate1=%d, Gate2=%d." % [int(g1), int(g2)]
+			_:
+				_feedback_label.text = "Wrong output. Gate1=%d, Gate2=%d. Try different inputs." % [int(g1), int(g2)]
 		_feedback_label.add_theme_color_override("font_color", Color("#ff1744"))
 		record_wrong_action()
 

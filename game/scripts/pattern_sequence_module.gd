@@ -120,7 +120,7 @@ func reset_module() -> void:
 func _generate_sequence() -> void:
 	_sequence.clear()
 	var seq_length: int = 6
-	var roll: int = randi() % 4
+	var roll: int = randi() % 10
 
 	if roll == 0:
 		# Arithmetic: a, a+d, a+2d, ...
@@ -145,12 +145,60 @@ func _generate_sequence() -> void:
 		_sequence.append(b)
 		for i in range(2, seq_length):
 			_sequence.append(_sequence[i - 1] + _sequence[i - 2])
-	else:
+	elif roll == 3:
 		# Squares: 1, 4, 9, 16, ...
 		_pattern_type = "squares"
 		var offset: int = randi_range(0, 3)
 		for i in range(seq_length):
 			_sequence.append((i + 1 + offset) * (i + 1 + offset))
+	elif roll == 4:
+		# Triangular numbers: 1, 3, 6, 10, 15, 21, ...
+		_pattern_type = "triangular"
+		var offset: int = randi_range(0, 2)
+		for i in range(seq_length):
+			var n: int = i + 1 + offset
+			_sequence.append(n * (n + 1) / 2)
+	elif roll == 5:
+		# Cubes: 1, 8, 27, 64, ...
+		_pattern_type = "cubes"
+		var offset: int = randi_range(0, 2)
+		for i in range(seq_length):
+			var n: int = i + 1 + offset
+			_sequence.append(n * n * n)
+	elif roll == 6:
+		# Powers of 2: 1, 2, 4, 8, 16, 32, ...
+		_pattern_type = "powers of 2"
+		var start_exp: int = randi_range(0, 2)
+		for i in range(seq_length):
+			_sequence.append(int(pow(2, i + start_exp)))
+	elif roll == 7:
+		# Primes: 2, 3, 5, 7, 11, 13, ...
+		_pattern_type = "primes"
+		var primes: Array[int] = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37]
+		var start: int = randi_range(0, primes.size() - seq_length)
+		for i in range(seq_length):
+			_sequence.append(primes[start + i])
+	elif roll == 8:
+		# Alternating: add d1, subtract d2, add d1, subtract d2, ...
+		_pattern_type = "alternating"
+		var a: int = randi_range(5, 20)
+		var d1: int = randi_range(4, 10)
+		var d2: int = randi_range(1, d1 - 1)
+		_sequence.append(a)
+		for i in range(1, seq_length):
+			if i % 2 == 1:
+				_sequence.append(_sequence[i - 1] + d1)
+			else:
+				_sequence.append(_sequence[i - 1] - d2)
+	else:
+		# Quadratic: constant second differences (e.g., 2, 5, 10, 17, 26, 37)
+		_pattern_type = "quadratic"
+		var a_coeff: int = randi_range(1, 3)
+		var b_coeff: int = randi_range(0, 4)
+		var c_coeff: int = randi_range(0, 5)
+		for i in range(seq_length):
+			var n: int = i + 1
+			_sequence.append(a_coeff * n * n + b_coeff * n + c_coeff)
 
 	# Hide one element (not first or last for better clues)
 	_hidden_index = randi_range(1, seq_length - 2)

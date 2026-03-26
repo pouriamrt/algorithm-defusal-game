@@ -162,9 +162,10 @@ func _fallback_module_hint(module_name: String) -> String:
 			"The optimal strategy eliminates half the possibilities every time.",
 		],
 		"Signal Sorting": [
-			"Look for the largest out-of-place element and move it toward its correct position.",
+			"Look for the most out-of-place element and move it toward its correct position.",
 			"Count how many pairs are in the wrong order — try to reduce that number with each swap.",
-			"Focus on making progress: each swap should bring you closer to sorted order.",
+			"Focus on making progress: each swap should bring you closer to the target order.",
+			"Check the direction! Ascending means smallest first; descending means largest first.",
 		],
 		"Wire Routing": [
 			"The shortest path isn't always the one with fewest hops — watch the edge weights.",
@@ -175,6 +176,9 @@ func _fallback_module_hint(module_name: String) -> String:
 			"Look at the differences between consecutive numbers — is there a pattern?",
 			"Try checking if the sequence grows by addition, multiplication, or something else.",
 			"Some sequences add the two previous numbers. Others square them. What rule fits?",
+			"Check if the numbers are perfect squares, cubes, triangular numbers, or primes.",
+			"If the differences aren't constant, look at the differences OF the differences (second differences).",
+			"Does the pattern alternate — growing then shrinking, or adding then subtracting?",
 		],
 		"Code Breaker": [
 			"Use exact matches to lock in correct positions, then use partial matches to find misplaced digits.",
@@ -197,14 +201,16 @@ func _fallback_module_hint(module_name: String) -> String:
 			"When you see POP, the answer is always the value on top — the last thing pushed.",
 		],
 		"Priority Queue": [
-			"Always scan for the highest priority number among the remaining tasks.",
-			"Unlike a regular queue (FIFO), a priority queue serves the most urgent item first.",
-			"Ignore the order tasks appeared — only their priority value matters.",
+			"Check the mode! MAX-QUEUE = highest first. MIN-QUEUE = lowest first.",
+			"Unlike a regular queue (FIFO), a priority queue serves by priority value, not arrival order.",
+			"Ignore the order tasks appeared — only their priority value and the queue mode matter.",
+			"Scan all remaining tasks and pick the one matching the queue direction (max or min).",
 		],
 		"Logic Gates": [
-			"AND = both inputs must be 1. OR = at least one input must be 1. NOT = flips the value.",
+			"AND = both 1. OR = any 1. XOR = exactly one 1. NAND = NOT(AND). NOT = flips.",
 			"Work backwards from the output: what does the final gate need? Then figure out what its inputs need.",
 			"Try all combinations systematically if stuck — with 3 inputs there are only 8 possibilities.",
+			"XOR is true when inputs DIFFER. NAND is the opposite of AND — false only when both are 1.",
 		],
 	}
 	var module_hints: Array = hints.get(module_name, ["Think carefully about your next move."])
