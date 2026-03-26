@@ -90,10 +90,11 @@ func _build_ui() -> void:
 	panel_outer.size_flags_stretch_ratio = 0.85
 	hbox.add_child(panel_outer)
 
-	# Panel background overlay
+	# Panel background overlay (ignore mouse so buttons underneath work)
 	var panel_bg := ColorRect.new()
 	panel_bg.color = Color(0.02, 0.04, 0.08, 0.95)
 	panel_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel_outer.add_child(panel_bg)
 
 	var panel_margin := MarginContainer.new()
@@ -204,6 +205,7 @@ func _build_ui() -> void:
 	accent_line.custom_minimum_size = Vector2(2, 0)
 	accent_line.set_anchors_preset(Control.PRESET_LEFT_WIDE)
 	accent_line.size = Vector2(2, 0)
+	accent_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel_outer.add_child(accent_line)
 
 
