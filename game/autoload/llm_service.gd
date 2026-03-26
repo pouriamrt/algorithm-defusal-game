@@ -173,6 +173,26 @@ func _fallback_module_hint(module_name: String) -> String:
 			"Try to remember the pattern as clusters or groups rather than individual positions.",
 			"Look for symmetry or familiar shapes in the highlighted cells.",
 		],
+		"Bit Cipher": [
+			"Each bit position represents a power of 2: 1, 2, 4, 8, 16, 32...",
+			"Start with the largest power of 2 that fits, then work down to smaller bits.",
+			"Binary is just addition of powers of 2. If you need 13, that's 8+4+1 = bits at positions 3,2,0.",
+		],
+		"Stack Overflow": [
+			"A stack is Last In, First Out. The most recently pushed item gets popped first.",
+			"Trace through each operation in order. After each PUSH, imagine placing a plate on a stack.",
+			"When you see POP, the answer is always the value on top — the last thing pushed.",
+		],
+		"Priority Queue": [
+			"Always scan for the highest priority number among the remaining tasks.",
+			"Unlike a regular queue (FIFO), a priority queue serves the most urgent item first.",
+			"Ignore the order tasks appeared — only their priority value matters.",
+		],
+		"Logic Gates": [
+			"AND = both inputs must be 1. OR = at least one input must be 1. NOT = flips the value.",
+			"Work backwards from the output: what does the final gate need? Then figure out what its inputs need.",
+			"Try all combinations systematically if stuck — with 3 inputs there are only 8 possibilities.",
+		],
 	}
 	var module_hints: Array = hints.get(module_name, ["Think carefully about your next move."])
 	return module_hints[randi() % module_hints.size()]
