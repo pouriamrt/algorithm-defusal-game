@@ -20,7 +20,7 @@ var _title_label: Label = null
 
 func _ready() -> void:
 	var stats: Dictionary = DifficultyManager.get_total_stats()
-	_is_victory = int(stats["waves_survived"]) >= WaveData.TOTAL_WAVES
+	_is_victory = DifficultyManager.current_wave > WaveData.TOTAL_WAVES
 	_build_ui()
 	_display_results(stats)
 	if _is_victory:
@@ -58,7 +58,6 @@ func _build_ui() -> void:
 
 	var center := CenterContainer.new()
 	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.add_child(center)
 
 	var vbox := VBoxContainer.new()
