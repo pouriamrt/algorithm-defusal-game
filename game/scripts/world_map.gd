@@ -214,12 +214,10 @@ func _process(delta: float) -> void:
 
 
 func _map_pos(normalized: Vector2) -> Vector2:
+	"""Convert normalized 0-1 coordinates to screen position matching the map texture."""
 	var s: Vector2 = _map_draw.size
-	var margin: float = 20.0
-	return Vector2(
-		margin + normalized.x * (s.x - margin * 2),
-		margin + normalized.y * (s.y - margin * 2)
-	)
+	# The map texture covers the full area (no margins), so map directly
+	return Vector2(normalized.x * s.x, normalized.y * s.y)
 
 
 func _on_map_draw() -> void:
@@ -315,7 +313,7 @@ func _draw_frame(d: Control, s: Vector2) -> void:
 	d.draw_line(Vector2(s.x - m, s.y - m), Vector2(s.x - m - cl, s.y - m), cc, 1.5)
 	d.draw_line(Vector2(s.x - m, s.y - m), Vector2(s.x - m, s.y - m - cl), cc, 1.5)
 	# Title
-	d.draw_string(ThemeDB.fallback_font, Vector2(m + 5, m - 3), "GLOBAL THREAT MAP — OPERATION DARKFIRE", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0, 0.6, 0.9, 0.35))
+	d.draw_string(ThemeDB.fallback_font, Vector2(m + 5, m + 12), "GLOBAL THREAT MAP — OPERATION DARKFIRE", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0, 0.6, 0.9, 0.35))
 
 
 func _on_deploy() -> void:
