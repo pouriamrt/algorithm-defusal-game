@@ -4,6 +4,7 @@ extends BaseModule
 
 var _num_elements: int = 6
 var _sort_descending: bool = false
+var _sorted_target: Array[int] = []
 
 var _values: Array[int] = []
 var _selected_index: int = -1
@@ -117,16 +118,15 @@ func reset_module() -> void:
 
 
 func _generate_values() -> void:
-	"""Generate NUM_ELEMENTS random values, ensuring they're not already sorted."""
 	_values.clear()
 	for i in range(_num_elements):
 		_values.append(randi_range(10, 99))
-	# Ensure not already in target order
-	var target := _values.duplicate()
-	target.sort()
+	# Compute and cache sorted target once
+	_sorted_target = _values.duplicate()
+	_sorted_target.sort()
 	if _sort_descending:
-		target.reverse()
-	while _values == target:
+		_sorted_target.reverse()
+	while _values == _sorted_target:
 		_values.shuffle()
 
 
@@ -149,16 +149,10 @@ func _rebuild_buttons() -> void:
 
 
 func _update_button_colors() -> void:
-	"""Highlight sorted-in-place elements green, selected element cyan."""
-	var sorted_copy := _values.duplicate()
-	sorted_copy.sort()
-	if _sort_descending:
-		sorted_copy.reverse()
-
 	for i in range(_buttons.size()):
 		if i == _selected_index:
 			_buttons[i].add_theme_color_override("font_color", Color("#00e5ff"))
-		elif _values[i] == sorted_copy[i]:
+		elif _values[i] == _sorted_target[i]:
 			_buttons[i].add_theme_color_override("font_color", Color("#00e676"))
 		else:
 			_buttons[i].add_theme_color_override("font_color", Color("#e0e0e0"))
@@ -217,28 +211,16 @@ func _on_button_pressed(index: int) -> void:
 
 
 func _count_inversions() -> int:
-	"""Count the number of inversions relative to the target sort direction."""
 	var count := 0
 	for i in range(_values.size()):
 		for j in range(i + 1, _values.size()):
-			if _sort_descending:
-				if _values[i] < _values[j]:
-					count += 1
-			else:
-				if _values[i] > _values[j]:
-					count += 1
+			if (_values[i] > _values[j]) != _sort_descending:
+				count += 1
 	return count
 
 
 func _is_sorted() -> bool:
-	for i in range(_values.size() - 1):
-		if _sort_descending:
-			if _values[i] < _values[i + 1]:
-				return false
-		else:
-			if _values[i] > _values[i + 1]:
-				return false
-	return true
+	return _values == _sorted_target
 
 
 func get_module_state() -> Dictionary:

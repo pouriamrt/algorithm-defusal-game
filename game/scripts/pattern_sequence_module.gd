@@ -245,9 +245,6 @@ func _on_submit() -> void:
 		_feedback_label.text = "PATTERN DECODED!"
 		_feedback_label.add_theme_color_override("font_color", Color("#00e676"))
 		_submit_btn.disabled = true
-		# Reveal the answer
-		for i in range(_labels.size()):
-			pass
 		if _learn_label:
 			_learn_label.text = "Key Insight: This was a %s sequence. Recognizing patterns is fundamental to algorithm design and data compression." % _pattern_type
 		complete_module()

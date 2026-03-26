@@ -7,7 +7,6 @@ var _operations: Array[Dictionary] = []  # {type: "push"/"pop", value: int}
 var _expected_output: Array[int] = []
 var _player_output: Array[int] = []
 var _current_op_index: int = 0
-var _stack_display: Array[int] = []  # current visual stack state
 var _queue_mode: bool = false  # when true, FIFO queue instead of LIFO stack
 
 # UI references
@@ -30,7 +29,7 @@ func _ready() -> void:
 	algorithm_name = "Stack (LIFO)"
 	super._ready()
 	_build_ui()
-	reset_module()  # also sets _queue_mode and updates names
+	reset_module()
 
 
 func _build_ui() -> void:
@@ -161,7 +160,6 @@ func reset_module() -> void:
 	_operations.clear()
 	_expected_output.clear()
 	_player_output.clear()
-	_stack_display.clear()
 	_current_op_index = 0
 
 	# Decide variant: 40% chance of FIFO queue mode
@@ -253,11 +251,13 @@ func _generate_operations() -> void:
 
 
 func _push_unique(stack: Array[int], values_used: Array[int]) -> void:
-	if values_used.size() >= 9:
-		return  # All unique values exhausted — prevent infinite loop
-	var val: int = randi_range(1, 9)
-	while val in values_used:
-		val = randi_range(1, 9)
+	var available: Array[int] = []
+	for v in range(1, 10):
+		if v not in values_used:
+			available.append(v)
+	if available.is_empty():
+		return
+	var val: int = available[randi() % available.size()]
 	values_used.append(val)
 	stack.append(val)
 	_operations.append({"type": "push", "value": val})
