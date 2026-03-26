@@ -57,12 +57,13 @@ func _build_ui() -> void:
 	_start_btn.pressed.connect(_on_start)
 	vbox.add_child(_start_btn)
 
-	# Quit button
+	# Quit button (hidden on web — browsers can't quit)
 	_quit_btn = Button.new()
 	_quit_btn.text = "QUIT"
 	_quit_btn.custom_minimum_size = Vector2(250, 50)
 	_quit_btn.add_theme_font_size_override("font_size", 20)
 	_quit_btn.pressed.connect(_on_quit)
+	_quit_btn.visible = not OS.has_feature("web")
 	vbox.add_child(_quit_btn)
 
 	# Version label
