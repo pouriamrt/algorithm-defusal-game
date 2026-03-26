@@ -85,25 +85,26 @@ func _build_ui() -> void:
 	map_container.add_child(_map_draw)
 
 	# RIGHT: Info panel
-	var panel_outer := PanelContainer.new()
-	panel_outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel_outer.size_flags_stretch_ratio = 0.85
-	hbox.add_child(panel_outer)
+	var panel_wrapper := Control.new()
+	panel_wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel_wrapper.size_flags_stretch_ratio = 0.85
+	hbox.add_child(panel_wrapper)
 
-	# Panel background overlay (ignore mouse so buttons underneath work)
+	# Dark background
 	var panel_bg := ColorRect.new()
 	panel_bg.color = Color(0.02, 0.04, 0.08, 0.95)
 	panel_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	panel_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel_outer.add_child(panel_bg)
+	panel_wrapper.add_child(panel_bg)
 
-	var panel_margin := MarginContainer.new()
-	panel_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	panel_margin.add_theme_constant_override("margin_left", 25)
-	panel_margin.add_theme_constant_override("margin_right", 25)
-	panel_margin.add_theme_constant_override("margin_top", 30)
-	panel_margin.add_theme_constant_override("margin_bottom", 30)
-	panel_outer.add_child(panel_margin)
+	# Margin for content
+	var panel_outer := MarginContainer.new()
+	panel_outer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel_outer.add_theme_constant_override("margin_left", 25)
+	panel_outer.add_theme_constant_override("margin_right", 25)
+	panel_outer.add_theme_constant_override("margin_top", 30)
+	panel_outer.add_theme_constant_override("margin_bottom", 30)
+	panel_wrapper.add_child(panel_outer)
 
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 12)
@@ -206,7 +207,7 @@ func _build_ui() -> void:
 	accent_line.set_anchors_preset(Control.PRESET_LEFT_WIDE)
 	accent_line.size = Vector2(2, 0)
 	accent_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel_outer.add_child(accent_line)
+	panel_wrapper.add_child(accent_line)
 
 
 func _load_city_briefing() -> void:
