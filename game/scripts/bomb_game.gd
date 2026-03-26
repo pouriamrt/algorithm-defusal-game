@@ -73,14 +73,34 @@ func _build_ui() -> void:
 	# Left side: title + stability
 	var left_col := VBoxContainer.new()
 	left_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	left_col.add_theme_constant_override("separation", 6)
+	left_col.add_theme_constant_override("separation", 4)
 	header_row.add_child(left_col)
+
+	# Title row with nav buttons
+	var title_row := HBoxContainer.new()
+	title_row.add_theme_constant_override("separation", 10)
+	left_col.add_child(title_row)
+
+	var menu_btn := Button.new()
+	menu_btn.text = "MENU"
+	menu_btn.custom_minimum_size = Vector2(60, 26)
+	menu_btn.add_theme_font_size_override("font_size", 10)
+	menu_btn.pressed.connect(_on_main_menu)
+	title_row.add_child(menu_btn)
+
+	var restart_btn := Button.new()
+	restart_btn.text = "RESTART"
+	restart_btn.custom_minimum_size = Vector2(70, 26)
+	restart_btn.add_theme_font_size_override("font_size", 10)
+	restart_btn.pressed.connect(_on_restart)
+	title_row.add_child(restart_btn)
 
 	var title := Label.new()
 	title.text = "WAVE %d — %s" % [GameState.current_wave, GameState.city_name.to_upper()]
-	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_font_size_override("font_size", 20)
 	title.add_theme_color_override("font_color", GameState.accent_color)
-	left_col.add_child(title)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_row.add_child(title)
 
 	# Stability bar
 	var stability_row := HBoxContainer.new()
@@ -173,35 +193,13 @@ func _build_ui() -> void:
 
 	vbox.add_child(HSeparator.new())
 
-	# --- Bottom bar: status + buttons ---
-	var bottom_row := HBoxContainer.new()
-	bottom_row.add_theme_constant_override("separation", 15)
-	vbox.add_child(bottom_row)
-
-	# Menu button
-	var menu_btn := Button.new()
-	menu_btn.text = "MAIN MENU"
-	menu_btn.custom_minimum_size = Vector2(120, 32)
-	menu_btn.add_theme_font_size_override("font_size", 12)
-	menu_btn.pressed.connect(_on_main_menu)
-	bottom_row.add_child(menu_btn)
-
-	# Status label (center, expanding)
+	# --- Status bar ---
 	_status_label = Label.new()
 	_status_label.text = "3 modules remaining"
 	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_status_label.add_theme_color_override("font_color", Color("#e0e0e0"))
-	_status_label.add_theme_font_size_override("font_size", 16)
-	_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	bottom_row.add_child(_status_label)
-
-	# Restart button
-	var restart_btn := Button.new()
-	restart_btn.text = "RESTART WAVE"
-	restart_btn.custom_minimum_size = Vector2(120, 32)
-	restart_btn.add_theme_font_size_override("font_size", 12)
-	restart_btn.pressed.connect(_on_restart)
-	bottom_row.add_child(restart_btn)
+	_status_label.add_theme_font_size_override("font_size", 14)
+	vbox.add_child(_status_label)
 
 
 func _apply_wave_theme() -> void:
