@@ -108,7 +108,7 @@ func _build_ui() -> void:
 
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 12)
-	panel_margin.add_child(vbox)
+	panel_outer.add_child(vbox)
 
 	var current_city: Dictionary = WaveData.get_city(DifficultyManager.current_wave)
 	var accent: Color = WaveData.get_accent_color(DifficultyManager.current_wave)
