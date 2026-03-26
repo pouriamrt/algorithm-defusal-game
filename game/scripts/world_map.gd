@@ -47,7 +47,7 @@ func _build_ui() -> void:
 	_map_texture = TextureRect.new()
 	_map_texture.texture = load("res://assets/world_map.png")
 	_map_texture.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_map_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	_map_texture.stretch_mode = TextureRect.STRETCH_SCALE
 	_map_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	map_container.add_child(_map_texture)
 

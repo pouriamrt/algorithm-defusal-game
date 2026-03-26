@@ -15,17 +15,17 @@ const MOD_STACK := "res://modules/stack_overflow_module.tscn"     # Stack (LIFO)
 const MOD_PQUEUE := "res://modules/priority_queue_module.tscn"    # Priority Queue / Heap
 const MOD_LOGIC := "res://modules/logic_gates_module.tscn"        # Boolean Logic / Circuits
 
-# City coordinates use equirectangular projection:
-# x = (longitude + 180) / 360, y = (90 - latitude) / 180
+# City coordinates: x = (longitude + 180) / 360, y = (90 - latitude) / 180
+# Verified against Natural Earth equirectangular map (no crop, full -180..180, -90..90)
 const CITIES: Array[Dictionary] = [
 	{"name": "Washington D.C.", "region": "North America", "accent": "#4488ff", "threat": "LOW",
-	 "x": 0.285, "y": 0.285, "modules": [MOD_FREQ, MOD_BITS, MOD_PATTERN]},
+	 "x": 0.286, "y": 0.284, "modules": [MOD_FREQ, MOD_BITS, MOD_PATTERN]},
 	{"name": "London", "region": "Europe", "accent": "#7799bb", "threat": "LOW",
-	 "x": 0.500, "y": 0.215, "modules": [MOD_LOGIC, MOD_SORT, MOD_STACK]},
+	 "x": 0.500, "y": 0.214, "modules": [MOD_LOGIC, MOD_SORT, MOD_STACK]},
 	{"name": "Paris", "region": "Europe", "accent": "#ddaa44", "threat": "MODERATE",
-	 "x": 0.507, "y": 0.232, "modules": [MOD_MEMORY, MOD_WIRE, MOD_PQUEUE]},
+	 "x": 0.507, "y": 0.231, "modules": [MOD_MEMORY, MOD_WIRE, MOD_PQUEUE]},
 	{"name": "Tokyo", "region": "Asia", "accent": "#ff44aa", "threat": "MODERATE",
-	 "x": 0.889, "y": 0.252, "modules": [MOD_CODE, MOD_BITS, MOD_SORT]},
+	 "x": 0.889, "y": 0.302, "modules": [MOD_CODE, MOD_BITS, MOD_SORT]},
 	{"name": "Cairo", "region": "Africa", "accent": "#ddaa55", "threat": "ELEVATED",
 	 "x": 0.587, "y": 0.333, "modules": [MOD_STACK, MOD_PATTERN, MOD_WIRE]},
 	{"name": "Moscow", "region": "Europe", "accent": "#aaccee", "threat": "ELEVATED",
