@@ -70,13 +70,17 @@ func _calc_base_params(w: int, timer_bonus: int, sort_bonus: int, graph_bonus: i
 
 
 func get_total_stats() -> Dictionary:
+	# Deduplicate wave_history: last entry per wave wins (handles replays)
+	var by_wave: Dictionary = {}
+	for entry in wave_history:
+		by_wave[int(entry["wave"])] = entry
 	var total_time: float = 0.0
 	var total_mistakes: int = 0
-	for entry in wave_history:
-		total_time += float(entry["time_used"])
-		total_mistakes += int(entry["mistakes"])
+	for w in by_wave:
+		total_time += float(by_wave[w]["time_used"])
+		total_mistakes += int(by_wave[w]["mistakes"])
 	return {
-		"waves_survived": wave_history.size(),
+		"waves_survived": current_wave - 1,
 		"total_time_used": total_time,
 		"total_mistakes": total_mistakes,
 	}

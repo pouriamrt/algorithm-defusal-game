@@ -209,8 +209,10 @@ func _handle_hot_cold_guess(guess: int) -> void:
 
 	_feedback_label.text = feedback_text
 	_feedback_label.add_theme_color_override("font_color", _get_heat_color(distance))
+	# Only penalize when getting colder or staying same — reward improvement
+	if _prev_distance >= 0 and distance >= _prev_distance:
+		record_wrong_action()
 	_prev_distance = distance
-	record_wrong_action()
 
 
 func get_module_state() -> Dictionary:

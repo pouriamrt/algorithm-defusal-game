@@ -246,7 +246,8 @@ func _display_results(stats: Dictionary) -> void:
 
 
 func _display_victory_results(stats: Dictionary) -> void:
-	_stats_label.text = "10 cities saved  |  %d total mistakes  |  Time remaining: %.0fs" % [
+	_stats_label.text = "%d cities saved  |  %d total mistakes  |  Time remaining: %.0fs" % [
+		WaveData.TOTAL_WAVES,
 		int(stats["total_mistakes"]),
 		GameState.timer_remaining,
 	]

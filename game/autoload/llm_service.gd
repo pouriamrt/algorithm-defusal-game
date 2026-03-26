@@ -228,7 +228,7 @@ func _fallback_results_summary(performance_data: Dictionary) -> String:
 	var total_mistakes: int = int(performance_data.get("total_mistakes", 0))
 	var waves_survived: int = int(performance_data.get("waves_survived", 0))
 
-	if outcome == "defused" or waves_survived >= 10:
+	if outcome == "defused" or waves_survived >= WaveData.TOTAL_WAVES:
 		return (
 			"Outstanding work, Agent CIPHER! You neutralized threats across %d cities "
 			% waves_survived

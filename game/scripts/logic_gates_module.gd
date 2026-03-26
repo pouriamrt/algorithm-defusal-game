@@ -167,11 +167,13 @@ func _generate_circuit() -> void:
 		_gates.append({"type": "PASS", "inputs": "C", "desc": "C"})
 	_gates.append({"type": gate2_type, "inputs": "G1, G2", "desc": "%s(Gate1, Gate2)" % gate2_type})
 
-	# Find a valid target — try TRUE first, then FALSE
+	# Find a valid target — try random first, then flip, then regenerate
 	_target_output = randf() < 0.5
-	var has_solution: bool = _has_valid_input(_target_output)
-	if not has_solution:
+	if not _has_valid_input(_target_output):
 		_target_output = not _target_output
+		if not _has_valid_input(_target_output):
+			_generate_circuit()
+			return
 
 
 func _has_valid_input(target: bool) -> bool:

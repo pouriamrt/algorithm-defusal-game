@@ -15,6 +15,7 @@ wheels/
 *.import
 export_presets.cfg
 *.translation
+Web-export/
 
 # OS
 .DS_Store
