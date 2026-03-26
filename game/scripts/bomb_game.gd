@@ -14,6 +14,8 @@ var _mission_label: Label
 var _status_label: Label
 var _module_container: HBoxContainer
 var _bomb_visual: BombVisual
+var _tech_bg: TechBackground
+var _screen_fx: ScreenEffects
 
 # Pulse animation state
 var _pulse_time: float = 0.0
@@ -29,11 +31,14 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
-	# Full-screen dark background
-	var bg := ColorRect.new()
-	bg.color = Color("#0a0e17")
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
+	# Animated tech background (replaces static color)
+	_tech_bg = TechBackground.new()
+	_tech_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_tech_bg)
+
+	# Screen effects overlay (post-processing)
+	_screen_fx = ScreenEffects.new()
+	add_child(_screen_fx)
 
 	# Main layout
 	var margin := MarginContainer.new()
@@ -194,8 +199,10 @@ func _process(delta: float) -> void:
 	_timer_label.text = "%02d:%02d" % [minutes, seconds]
 
 	# Update bomb visual
-	_bomb_visual.timer_ratio = t / GameState.timer_total
-	_bomb_visual.stability_ratio = float(GameState.stability) / float(GameState.stability_max)
+	var timer_ratio := t / GameState.timer_total
+	var stability_ratio := float(GameState.stability) / float(GameState.stability_max)
+	_bomb_visual.timer_ratio = timer_ratio
+	_bomb_visual.stability_ratio = stability_ratio
 
 	# Timer color states
 	_pulse_time += delta
@@ -207,6 +214,10 @@ func _process(delta: float) -> void:
 	else:
 		var alpha: float = 0.5 + 0.5 * sin(_pulse_time * 8.0)
 		_timer_label.add_theme_color_override("font_color", Color("#ff1744", alpha))
+
+	# Update background alert level based on stability + timer
+	var danger: float = max(1.0 - stability_ratio, 1.0 - timer_ratio)
+	_tech_bg.set_alert_level(clampf(danger * 1.5 - 0.3, 0.0, 1.0))
 
 	# Update status
 	var remaining: int = GameState.modules_total - GameState.modules_solved
@@ -222,8 +233,8 @@ func _on_module_solved(module_name: String) -> void:
 
 func _on_wrong_action(_module_name: String) -> void:
 	GameState.record_wrong_action()
-	# Screen shake on wrong action
 	_bomb_visual.trigger_shake(6.0)
+	_screen_fx.trigger_damage()
 
 
 func _on_stability_changed(new_value: int) -> void:
@@ -244,7 +255,7 @@ func _on_game_over(outcome: String) -> void:
 		_status_label.text = "BOMB DEFUSED! Well done, technician."
 		_status_label.add_theme_color_override("font_color", Color("#00e676"))
 		_bomb_visual.trigger_defused()
-		# Longer delay to admire the defused bomb
+		_screen_fx.trigger_defuse_flash()
 		await get_tree().create_timer(2.5).timeout
 	else:
 		if outcome == "exploded_timer":
@@ -253,7 +264,8 @@ func _on_game_over(outcome: String) -> void:
 			_status_label.text = "STABILITY CRITICAL — DETONATION!"
 		_status_label.add_theme_color_override("font_color", Color("#ff1744"))
 		_bomb_visual.trigger_explosion()
-		# Wait for explosion animation to play
-		await get_tree().create_timer(2.0).timeout
+		_screen_fx.trigger_explosion_flash()
+		_tech_bg.set_alert_level(1.0)
+		await get_tree().create_timer(2.5).timeout
 
 	get_tree().change_scene_to_file("res://scenes/result_screen.tscn")
