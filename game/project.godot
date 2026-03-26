@@ -22,6 +22,8 @@ config/features=PackedStringArray("4.6")
 
 GameState="*res://autoload/game_state.gd"
 LLMService="*res://autoload/llm_service.gd"
+WaveData="*res://autoload/wave_data.gd"
+DifficultyManager="*res://autoload/difficulty_manager.gd"
 
 [display]
 

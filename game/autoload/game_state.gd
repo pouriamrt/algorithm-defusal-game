@@ -1,29 +1,53 @@
 extends Node
 ## Global game state singleton. Persists across scene transitions.
-## Tracks timer, stability, module completion, and per-module results.
+## Accepts difficulty params from DifficultyManager for wave-based scaling.
 
 signal stability_changed(new_value: int)
 signal timer_updated(remaining: float)
 signal game_over(outcome: String)
 
-# Configuration
-var timer_total: float = 120.0
+# Configuration (set by DifficultyManager params)
+var timer_total: float = 150.0
 var stability_max: int = 100
 var stability_penalty: int = 10
 
+# Wave info
+var current_wave: int = 1
+var city_name: String = ""
+var accent_color: Color = Color("#00e5ff")
+
+# Module difficulty params (read by modules)
+var freq_range_max: int = 50
+var sort_elements: int = 5
+var graph_nodes: int = 5
+var graph_extra_edges: int = 2
+
 # Runtime state
-var timer_remaining: float = 120.0
+var timer_remaining: float = 150.0
 var stability: int = 100
 var mistakes: int = 0
 var modules_solved: int = 0
 var modules_total: int = 3
-var game_outcome: String = ""  # "defused", "exploded_timer", "exploded_stability"
+var game_outcome: String = ""
 var module_results: Array[Dictionary] = []
 var is_game_active: bool = false
 
 
-func reset() -> void:
-	"""Reset all state for a new game."""
+func reset_with_params(params: Dictionary) -> void:
+	"""Reset state using difficulty parameters from DifficultyManager."""
+	timer_total = float(params.get("timer_total", 150.0))
+	stability_max = int(params.get("stability_max", 100))
+	stability_penalty = int(params.get("stability_penalty", 10))
+	freq_range_max = int(params.get("freq_range_max", 50))
+	sort_elements = int(params.get("sort_elements", 5))
+	graph_nodes = int(params.get("graph_nodes", 5))
+	graph_extra_edges = int(params.get("graph_extra_edges", 2))
+
+	current_wave = int(params.get("wave", 1))
+	var city: Dictionary = params.get("city", {})
+	city_name = str(city.get("name", "Unknown"))
+	accent_color = Color(params.get("accent_color", Color("#00e5ff")))
+
 	timer_remaining = timer_total
 	stability = stability_max
 	mistakes = 0
@@ -33,8 +57,12 @@ func reset() -> void:
 	is_game_active = true
 
 
+func reset() -> void:
+	"""Reset using current DifficultyManager params."""
+	reset_with_params(DifficultyManager.get_wave_params())
+
+
 func record_wrong_action() -> void:
-	"""Called when a module reports a wrong action."""
 	if not is_game_active:
 		return
 	mistakes += 1
@@ -47,7 +75,6 @@ func record_wrong_action() -> void:
 
 
 func record_module_solved(result: Dictionary) -> void:
-	"""Called when a module is completed. result has: name, mistakes, algorithm."""
 	if not is_game_active:
 		return
 	modules_solved += 1
@@ -59,7 +86,6 @@ func record_module_solved(result: Dictionary) -> void:
 
 
 func tick_timer(delta: float) -> void:
-	"""Called each frame by BombGame._process."""
 	if not is_game_active:
 		return
 	timer_remaining = max(0.0, timer_remaining - delta)

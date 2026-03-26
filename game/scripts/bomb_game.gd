@@ -25,6 +25,7 @@ var _game_ended: bool = false
 func _ready() -> void:
 	_build_ui()
 	GameState.reset()
+	_apply_wave_theme()
 	_instantiate_modules()
 	_setup_signals()
 	_load_mission_briefing()
@@ -65,9 +66,9 @@ func _build_ui() -> void:
 	header_row.add_child(left_col)
 
 	var title := Label.new()
-	title.text = "BOMB DEFUSAL SYSTEM"
+	title.text = "WAVE %d — %s" % [GameState.current_wave, GameState.city_name.to_upper()]
 	title.add_theme_font_size_override("font_size", 22)
-	title.add_theme_color_override("font_color", Color("#00e5ff"))
+	title.add_theme_color_override("font_color", GameState.accent_color)
 	left_col.add_child(title)
 
 	# Stability bar
@@ -145,6 +146,14 @@ func _build_ui() -> void:
 	_status_label.add_theme_color_override("font_color", Color("#e0e0e0"))
 	_status_label.add_theme_font_size_override("font_size", 16)
 	vbox.add_child(_status_label)
+
+
+func _apply_wave_theme() -> void:
+	var accent: Color = GameState.accent_color
+	_tech_bg.set_accent_color(accent)
+	_tech_bg.set_watermark(GameState.city_name)
+	_bomb_visual.accent_color = accent
+	_bomb_visual.wave_number = GameState.current_wave
 
 
 func _instantiate_modules() -> void:
@@ -251,12 +260,25 @@ func _on_stability_changed(new_value: int) -> void:
 func _on_game_over(outcome: String) -> void:
 	_game_ended = true
 
+	# Record performance
+	var time_used: float = GameState.timer_total - GameState.timer_remaining
+	var max_mistakes: int = max(1, int(float(GameState.stability_max) / float(GameState.stability_penalty)))
+	DifficultyManager.record_wave_performance(time_used, GameState.timer_total, GameState.mistakes, max_mistakes)
+
 	if outcome == "defused":
-		_status_label.text = "BOMB DEFUSED! Well done, technician."
+		_status_label.text = "BOMB DEFUSED! Well done, Agent."
 		_status_label.add_theme_color_override("font_color", Color("#00e676"))
 		_bomb_visual.trigger_defused()
 		_screen_fx.trigger_defuse_flash()
-		await get_tree().create_timer(2.5).timeout
+		await get_tree().create_timer(2.0).timeout
+
+		if DifficultyManager.current_wave >= WaveData.TOTAL_WAVES:
+			# All waves complete — victory!
+			DifficultyManager.advance_wave()
+			get_tree().change_scene_to_file("res://scenes/result_screen.tscn")
+		else:
+			DifficultyManager.advance_wave()
+			get_tree().change_scene_to_file("res://scenes/world_map.tscn")
 	else:
 		if outcome == "exploded_timer":
 			_status_label.text = "TIME'S UP — DETONATION!"
@@ -267,5 +289,4 @@ func _on_game_over(outcome: String) -> void:
 		_screen_fx.trigger_explosion_flash()
 		_tech_bg.set_alert_level(1.0)
 		await get_tree().create_timer(2.5).timeout
-
-	get_tree().change_scene_to_file("res://scenes/result_screen.tscn")
+		get_tree().change_scene_to_file("res://scenes/result_screen.tscn")

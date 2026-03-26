@@ -53,6 +53,19 @@ func get_mission_briefing() -> String:
 	return fallback
 
 
+func get_city_briefing(city_name: String, wave: int, threat_level: String) -> String:
+	"""Returns fallback city briefing. Async LLM result emitted as 'city_briefing'."""
+	var fallback := _fallback_city_briefing(city_name, wave, threat_level)
+	if use_llm:
+		print("[LLMService] Requesting city briefing for '%s'..." % city_name)
+		_post_request(
+			"/api/mission-briefing",
+			{"city": city_name, "wave": wave, "threat_level": threat_level},
+			"city_briefing"
+		)
+	return fallback
+
+
 func get_module_hint(module_name: String, current_state: Dictionary) -> String:
 	"""Returns fallback hint immediately. Async LLM result emitted if available."""
 	var fallback := _fallback_module_hint(module_name)
@@ -119,6 +132,15 @@ func _fallback_mission_briefing() -> String:
 	return briefings[randi() % briefings.size()]
 
 
+func _fallback_city_briefing(city_name: String, wave: int, threat_level: String) -> String:
+	var templates := [
+		"NEXUS operatives have planted a device in %s. Threat assessment: %s. Local authorities are unaware. You have one shot at this, Agent.",
+		"Intelligence confirms an algorithm-locked device in %s. NEXUS is using increasingly complex encryption. Threat level: %s. Proceed with extreme caution.",
+		"Satellite imagery shows suspicious activity in %s. Our analysts believe a %s-level device is active. This is wave %d — they're getting smarter.",
+	]
+	return templates[wave % templates.size()] % [city_name, threat_level, wave]
+
+
 func _fallback_module_hint(module_name: String) -> String:
 	var hints := {
 		"Frequency Lock": [
@@ -142,23 +164,25 @@ func _fallback_module_hint(module_name: String) -> String:
 
 
 func _fallback_results_summary(performance_data: Dictionary) -> String:
-	var outcome: String = performance_data.get("game_outcome", "unknown")
-	var time_left: float = performance_data.get("timer_remaining", 0.0)
-	var total_mistakes: int = performance_data.get("total_mistakes", 0)
+	var outcome: String = str(performance_data.get("game_outcome", "unknown"))
+	var time_left: float = float(performance_data.get("timer_remaining", 0.0))
+	var total_mistakes: int = int(performance_data.get("total_mistakes", 0))
+	var waves_survived: int = int(performance_data.get("waves_survived", 0))
 
-	if outcome == "defused":
+	if outcome == "defused" or waves_survived >= 10:
 		return (
-			"Excellent work, technician! You defused the device with %.1fs remaining and %d mistake(s). "
+			"Outstanding work, Agent CIPHER! You neutralized threats across %d cities "
+			% waves_survived
+			+ "with %.1fs remaining on the final device and %d total mistake(s). "
 			% [time_left, total_mistakes]
-			+ "The Frequency Lock tested binary search — halving the search space each guess. "
-			+ "Signal Sorting explored how comparing and swapping elements brings order from chaos. "
-			+ "Wire Routing challenged you to find the lowest-cost path through a weighted graph, "
-			+ "the core idea behind Dijkstra's algorithm."
+			+ "The Frequency Lock tested binary search, Signal Sorting explored inversions, "
+			+ "and Wire Routing challenged shortest-path reasoning. NEXUS has been dismantled."
 		)
 	else:
 		return (
-			"The device detonated. You made %d mistake(s). " % total_mistakes
-			+ "Review the algorithms: binary search (Frequency Lock) halves the search space, "
-			+ "sorting (Signal Sort) reduces inversions, and shortest path (Wire Route) minimizes "
-			+ "total edge cost. Study these patterns and try again!"
+			"Agent CIPHER, the device detonated in wave %d. You survived %d city(ies) "
+			% [waves_survived + 1, waves_survived]
+			+ "with %d total mistake(s). " % total_mistakes
+			+ "Review the algorithms: binary search, sorting inversions, and Dijkstra's shortest path. "
+			+ "NEXUS remains active. Regroup and try again."
 		)

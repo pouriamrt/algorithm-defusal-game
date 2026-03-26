@@ -7,6 +7,8 @@ var _time: float = 0.0
 var _particles: Array[Dictionary] = []
 var _data_streams: Array[Dictionary] = []
 var _alert_level: float = 0.0  # 0.0 = calm, 1.0 = critical
+var _accent_color: Color = Color(0, 0.8, 1.0)
+var _watermark_text: String = ""
 
 const NUM_PARTICLES: int = 40
 const NUM_STREAMS: int = 8
@@ -53,6 +55,17 @@ func _draw() -> void:
 	_draw_particles()
 	# Corner brackets (HUD frame)
 	_draw_hud_frame()
+	# City watermark
+	if _watermark_text != "":
+		draw_string(
+			ThemeDB.fallback_font,
+			size / 2.0 + Vector2(-200, 50),
+			_watermark_text.to_upper(),
+			HORIZONTAL_ALIGNMENT_CENTER,
+			500,
+			60,
+			Color(_accent_color.r, _accent_color.g, _accent_color.b, 0.03)
+		)
 
 
 func _draw_gradient() -> void:
@@ -67,8 +80,8 @@ func _draw_gradient() -> void:
 
 
 func _draw_grid() -> void:
-	var grid_color := Color(0.0, 0.4, 0.6, 0.06)
-	var grid_pulse_color := Color(0.0, 0.8, 1.0, 0.12)
+	var grid_color := Color(_accent_color.r, _accent_color.g, _accent_color.b, 0.06)
+	var grid_pulse_color := Color(_accent_color.r, _accent_color.g, _accent_color.b, 0.12)
 
 	# Vertical lines
 	var x: float = fmod(_time * 5.0, GRID_SPACING)
@@ -107,7 +120,7 @@ func _draw_particles() -> void:
 	for p in _particles:
 		var pulse := sin(_time * 2.0 + p["phase"]) * 0.3 + 0.7
 		var alpha: float = p["alpha"] * pulse
-		var particle_color := Color(0, 0.8, 1.0, alpha)
+		var particle_color := Color(_accent_color.r, _accent_color.g, _accent_color.b, alpha)
 		if _alert_level > 0.5:
 			particle_color = particle_color.lerp(Color(1, 0.3, 0, alpha), _alert_level)
 		draw_circle(p["pos"], p["size"], particle_color)
@@ -131,7 +144,7 @@ func _draw_streams() -> void:
 
 func _draw_hud_frame() -> void:
 	var corner_len: float = 40.0
-	var corner_color := Color(0, 0.8, 1.0, 0.3)
+	var corner_color := Color(_accent_color.r, _accent_color.g, _accent_color.b, 0.3)
 	if _alert_level > 0.5:
 		corner_color = Color(1, 0.2, 0, 0.4)
 	var w: float = size.x
@@ -191,3 +204,11 @@ func _update_streams(delta: float) -> void:
 func set_alert_level(level: float) -> void:
 	"""Set alert level 0.0-1.0. Shifts colors from cyan to red."""
 	_alert_level = clampf(level, 0.0, 1.0)
+
+
+func set_accent_color(color: Color) -> void:
+	_accent_color = color
+
+
+func set_watermark(text: String) -> void:
+	_watermark_text = text

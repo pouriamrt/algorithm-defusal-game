@@ -117,34 +117,43 @@ func _build_ui() -> void:
 
 
 func _display_results() -> void:
+	var stats: Dictionary = DifficultyManager.get_total_stats()
+	var waves_survived: int = int(stats["waves_survived"])
+
 	# Outcome
-	match GameState.game_outcome:
-		"defused":
-			_outcome_label.text = "BOMB DEFUSED"
-			_outcome_label.add_theme_color_override("font_color", Color("#00e676"))
-		"exploded_timer":
-			_outcome_label.text = "DETONATION — TIME EXPIRED"
-			_outcome_label.add_theme_color_override("font_color", Color("#ff1744"))
-		"exploded_stability":
-			_outcome_label.text = "DETONATION — STABILITY FAILURE"
-			_outcome_label.add_theme_color_override("font_color", Color("#ff1744"))
-		_:
-			_outcome_label.text = "MISSION STATUS UNKNOWN"
-			_outcome_label.add_theme_color_override("font_color", Color("#ff6f00"))
+	if waves_survived >= WaveData.TOTAL_WAVES:
+		_outcome_label.text = "WORLD SAVED — ALL THREATS NEUTRALIZED"
+		_outcome_label.add_theme_color_override("font_color", Color("#00e676"))
+	else:
+		match GameState.game_outcome:
+			"defused":
+				_outcome_label.text = "BOMB DEFUSED"
+				_outcome_label.add_theme_color_override("font_color", Color("#00e676"))
+			"exploded_timer":
+				_outcome_label.text = "DETONATION — TIME EXPIRED"
+				_outcome_label.add_theme_color_override("font_color", Color("#ff1744"))
+			"exploded_stability":
+				_outcome_label.text = "DETONATION — STABILITY FAILURE"
+				_outcome_label.add_theme_color_override("font_color", Color("#ff1744"))
+			_:
+				_outcome_label.text = "MISSION STATUS UNKNOWN"
+				_outcome_label.add_theme_color_override("font_color", Color("#ff6f00"))
 
 	# Stats
-	_stats_label.text = "Time Remaining: %.1fs  |  Mistakes: %d  |  Modules Solved: %d/3" % [
-		GameState.timer_remaining,
-		GameState.mistakes,
-		GameState.modules_solved,
+	_stats_label.text = "Waves: %d/%d  |  Mistakes: %d  |  City: %s" % [
+		waves_survived, WaveData.TOTAL_WAVES,
+		int(stats["total_mistakes"]),
+		GameState.city_name,
 	]
 
 	# LLM summary
 	var perf_data := {
 		"game_outcome": GameState.game_outcome,
 		"timer_remaining": GameState.timer_remaining,
-		"total_mistakes": GameState.mistakes,
+		"total_mistakes": int(stats["total_mistakes"]),
 		"module_results": GameState.module_results,
+		"waves_survived": waves_survived,
+		"city_name": GameState.city_name,
 	}
 	_explanation_label.text = LLMService.get_results_summary(perf_data)
 

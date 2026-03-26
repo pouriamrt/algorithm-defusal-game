@@ -2,7 +2,7 @@ extends BaseModule
 ## Signal Sorting Module — Sorting puzzle.
 ## Player swaps elements to sort an array. Non-improving swaps are penalized.
 
-const NUM_ELEMENTS: int = 6
+var _num_elements: int = 6
 
 var _values: Array[int] = []
 var _selected_index: int = -1
@@ -82,6 +82,7 @@ func _build_ui() -> void:
 
 func reset_module() -> void:
 	super.reset_module()
+	_num_elements = GameState.sort_elements
 	_selected_index = -1
 	_swap_count = 0
 	_generate_values()
@@ -96,7 +97,7 @@ func reset_module() -> void:
 func _generate_values() -> void:
 	"""Generate NUM_ELEMENTS random values, ensuring they're not already sorted."""
 	_values.clear()
-	for i in range(NUM_ELEMENTS):
+	for i in range(_num_elements):
 		_values.append(randi_range(10, 99))
 	# Ensure not already sorted
 	var sorted_copy := _values.duplicate()

@@ -63,11 +63,19 @@ class ModuleHintRequest(BaseModel):
     current_state: dict[str, Any] = {}
 
 
+class MissionBriefingRequest(BaseModel):
+    city: str = ""
+    wave: int = 1
+    threat_level: str = "LOW"
+
+
 class ResultsSummaryRequest(BaseModel):
     game_outcome: str
     timer_remaining: float
     total_mistakes: int
     module_results: list[dict[str, Any]]
+    waves_survived: int = 0
+    city_name: str = ""
 
 
 # --- Endpoints ---
@@ -79,13 +87,26 @@ def health():
 
 
 @app.post("/api/mission-briefing")
-def mission_briefing():
+def mission_briefing(req: MissionBriefingRequest = MissionBriefingRequest()):
     system = (
-        "You are a dramatic mission briefing narrator for a bomb defusal game. "
-        "The player is a technician who must solve algorithm-based puzzles to defuse a bomb. "
-        "Write a 2-3 sentence tense, immersive briefing. Keep it short and punchy."
+        "You are a CIA mission briefing narrator for a bomb defusal game. "
+        "The player is Agent CIPHER, a counter-algorithm terrorism operative. "
+        "A terrorist organization called NEXUS has planted algorithm-locked bombs worldwide. "
+        "Write a 2-3 sentence tense, immersive briefing specific to the given city. "
+        "Reference the city's characteristics. Keep it short and punchy."
     )
-    user = "Generate a new mission briefing for the bomb defusal operation."
+    if req.city:
+        user = (
+            f"Generate a mission briefing for wave {req.wave} in {req.city}. "
+            f"Threat level: {req.threat_level}. "
+            f"The agent is deploying to defuse a NEXUS device."
+        )
+    else:
+        user = (
+            "Generate the opening briefing for Operation Darkfire. "
+            "NEXUS has planted 10 algorithm-locked bombs in cities worldwide. "
+            "Agent CIPHER is being activated."
+        )
     text = _chat(system, user)
     return {"text": text}
 
@@ -126,8 +147,10 @@ def module_hint(req: ModuleHintRequest):
 @app.post("/api/results-summary")
 def results_summary(req: ResultsSummaryRequest):
     system = (
-        "You are an educational debrief AI for a bomb defusal game that teaches algorithms. "
-        "Summarize the player's performance and explain the algorithm behind each module. "
+        "You are an educational debrief AI for a CIA bomb defusal game that teaches algorithms. "
+        "The player is Agent CIPHER fighting NEXUS across world cities. "
+        "Summarize the player's performance, mention how many waves/cities they survived, "
+        "and explain the algorithm behind each module. "
         "Be encouraging, educational, and concise. Use 3-5 sentences total."
     )
     modules_str = "\n".join(
@@ -137,6 +160,8 @@ def results_summary(req: ResultsSummaryRequest):
     )
     user = (
         f"Game outcome: {req.game_outcome}\n"
+        f"Waves survived: {req.waves_survived}/10\n"
+        f"Last city: {req.city_name}\n"
         f"Time remaining: {req.timer_remaining:.1f}s\n"
         f"Total mistakes: {req.total_mistakes}\n"
         f"Modules:\n{modules_str}\n\n"

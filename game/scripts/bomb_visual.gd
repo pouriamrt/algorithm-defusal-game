@@ -13,6 +13,8 @@ var stability_ratio: float = 1.0
 var is_exploding: bool = false
 var is_defused: bool = false
 var _time: float = 0.0
+var accent_color: Color = Color(0, 0.7, 1.0)
+var wave_number: int = 1
 
 # Explosion
 var _explosion_time: float = 0.0
@@ -141,7 +143,7 @@ func _draw_bomb_body(center: Vector2) -> void:
 
 func _draw_wire_veins(center: Vector2) -> void:
 	# Glowing circuit-like veins on the bomb surface
-	var vein_color := Color(0, 0.7, 1.0, 0.2 + 0.1 * sin(_time * 3.0))
+	var vein_color := Color(accent_color.r, accent_color.g, accent_color.b, 0.2 + 0.1 * sin(_time * 3.0))
 	if stability_ratio < 0.3:
 		vein_color = Color(1, 0.2, 0, 0.3 + 0.15 * sin(_time * 6.0))
 

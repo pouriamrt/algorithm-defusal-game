@@ -3,7 +3,8 @@ extends BaseModule
 ## Player clicks nodes to build a path through a weighted graph.
 ## Validates against Dijkstra's optimal shortest path.
 
-const NUM_NODES: int = 6
+var _num_nodes: int = 6
+var _num_extra_edges: int = 2
 const GRAPH_SIZE: Vector2 = Vector2(300, 280)
 const NODE_RADIUS: float = 20.0
 
@@ -108,6 +109,9 @@ func _build_ui() -> void:
 
 func reset_module() -> void:
 	super.reset_module()
+	_num_nodes = GameState.graph_nodes
+	_num_extra_edges = GameState.graph_extra_edges
+	_target = _num_nodes - 1
 	_player_path.clear()
 	_player_cost = 0
 	_attempt_count = 0
@@ -126,31 +130,34 @@ func _generate_graph() -> void:
 	_edges.clear()
 	_adjacency.clear()
 
-	# Place nodes in a grid-like pattern with some randomness
-	var cols: int = 3
-	var rows: int = 2
+	# Place nodes in a dynamic grid-like pattern with some randomness
+	var cols: int = max(2, (_num_nodes + 1) / 2)
+	var rows: int = max(2, int(ceil(float(_num_nodes) / cols)))
 	var cell_w: float = GRAPH_SIZE.x / cols
 	var cell_h: float = GRAPH_SIZE.y / rows
-	for r in range(rows):
-		for c in range(cols):
-			var x: float = cell_w * (c + 0.5) + randf_range(-20, 20)
-			var y: float = cell_h * (r + 0.5) + randf_range(-15, 15)
-			_nodes.append(Vector2(x, y))
+	for i in range(_num_nodes):
+		var r: int = i / cols
+		var c: int = i % cols
+		var x: float = cell_w * (c + 0.5) + randf_range(-20, 20)
+		var y: float = cell_h * (r + 0.5) + randf_range(-15, 15)
+		_nodes.append(Vector2(x, y))
 
 	# Initialize adjacency
-	for i in range(NUM_NODES):
+	for i in range(_num_nodes):
 		_adjacency[i] = []
 
-	# Ensure connectivity with a spanning path: 0->1->2->...->5
-	for i in range(NUM_NODES - 1):
+	# Ensure connectivity with a spanning path: 0->1->2->...->target
+	for i in range(_num_nodes - 1):
 		var cost: int = randi_range(1, 9)
 		_add_edge(i, i + 1, cost)
 
 	# Add extra edges for variety (some shortcuts, some traps)
-	var extra_edges := [[0, 2], [0, 3], [1, 4], [2, 5], [3, 5], [1, 3]]
+	var extra_edges: Array = []
+	for a in range(_num_nodes):
+		for b in range(a + 2, _num_nodes):
+			extra_edges.append([a, b])
 	extra_edges.shuffle()
-	var extras_to_add: int = randi_range(2, 4)
-	for i in range(min(extras_to_add, extra_edges.size())):
+	for i in range(min(_num_extra_edges, extra_edges.size())):
 		var pair: Array = extra_edges[i]
 		if not _has_edge(pair[0], pair[1]):
 			var cost: int = randi_range(1, 9)
@@ -175,16 +182,16 @@ func _compute_shortest_path() -> void:
 	"""Dijkstra's algorithm to find optimal cost from source to target."""
 	var dist: Array[int] = []
 	var visited: Array[bool] = []
-	for i in range(NUM_NODES):
+	for i in range(_num_nodes):
 		dist.append(999999)
 		visited.append(false)
 	dist[_source] = 0
 
-	for _i in range(NUM_NODES):
+	for _i in range(_num_nodes):
 		# Find unvisited node with smallest distance
 		var u: int = -1
 		var min_d: int = 999999
-		for v in range(NUM_NODES):
+		for v in range(_num_nodes):
 			if not visited[v] and dist[v] < min_d:
 				min_d = dist[v]
 				u = v

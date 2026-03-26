@@ -67,14 +67,14 @@ func _build_ui() -> void:
 
 	# Version label
 	var version := Label.new()
-	version.text = "v0.1.0 — MVP"
+	version.text = "v0.2.0 — OPERATION DARKFIRE"
 	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	version.add_theme_color_override("font_color", Color("#555555"))
 	vbox.add_child(version)
 
 
 func _on_start() -> void:
-	get_tree().change_scene_to_file("res://scenes/bomb_game.tscn")
+	get_tree().change_scene_to_file("res://scenes/opening_briefing.tscn")
 
 
 func _on_quit() -> void:

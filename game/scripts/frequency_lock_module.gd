@@ -53,7 +53,7 @@ func _build_ui() -> void:
 
 	_spinbox = SpinBox.new()
 	_spinbox.min_value = 1
-	_spinbox.max_value = 100
+	_spinbox.max_value = 1000
 	_spinbox.value = 50
 	_spinbox.custom_minimum_size = Vector2(100, 0)
 	input_row.add_child(_spinbox)
@@ -93,17 +93,18 @@ func _build_ui() -> void:
 
 func reset_module() -> void:
 	super.reset_module()
-	_target = randi_range(1, 100)
+	_target = randi_range(1, GameState.freq_range_max)
 	_guess_count = 0
 	_range_low = 1
-	_range_high = 100
+	_range_high = GameState.freq_range_max
 	if _feedback_label:
 		_feedback_label.text = "Find the safe frequency"
 		_feedback_label.add_theme_color_override("font_color", Color("#e0e0e0"))
-		_range_label.text = "Range: [1 — 100]"
+		_range_label.text = "Range: [1 — %d]" % GameState.freq_range_max
 		_guess_count_label.text = "Guesses: 0"
 		_hint_label.text = ""
-		_spinbox.value = 50
+		_spinbox.max_value = GameState.freq_range_max
+		_spinbox.value = GameState.freq_range_max / 2
 		_submit_btn.disabled = false
 
 
