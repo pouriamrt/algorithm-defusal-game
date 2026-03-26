@@ -39,6 +39,15 @@ func _build_ui() -> void:
 
 	vbox.add_child(HSeparator.new())
 
+	# Algorithm intro
+	var intro := Label.new()
+	intro.text = "SORTING: Arrange values in order by swapping pairs. Each swap should reduce the number of 'inversions' (out-of-order pairs)."
+	intro.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	intro.add_theme_color_override("font_color", Color("#aabbcc"))
+	intro.add_theme_font_size_override("font_size", 11)
+	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(intro)
+
 	# Instructions
 	var instr := Label.new()
 	instr.text = "Click two values to swap them.\nSort ascending to defuse."
@@ -64,6 +73,15 @@ func _build_ui() -> void:
 	_swap_count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_swap_count_label.add_theme_color_override("font_color", Color("#e0e0e0"))
 	vbox.add_child(_swap_count_label)
+
+	# Learn label (populated on completion)
+	_learn_label = Label.new()
+	_learn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_learn_label.add_theme_color_override("font_color", Color("#00e676"))
+	_learn_label.add_theme_font_size_override("font_size", 11)
+	_learn_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_learn_label.custom_minimum_size = Vector2(0, 30)
+	vbox.add_child(_learn_label)
 
 	# Hint
 	_hint_label = Label.new()
@@ -167,11 +185,11 @@ func _on_button_pressed(index: int) -> void:
 
 		if inversions_after >= inversions_before:
 			# Non-improving swap — penalty
-			_status_label.text = "Bad swap! Inversions not reduced."
+			_status_label.text = "Bad swap! Inversions: %d → %d (must decrease). An inversion is any pair where a larger value precedes a smaller one." % [inversions_before, inversions_after]
 			_status_label.add_theme_color_override("font_color", Color("#ff1744"))
 			record_wrong_action()
 		else:
-			_status_label.text = "Good swap! Inversions reduced."
+			_status_label.text = "Good swap! Inversions: %d → %d" % [inversions_before, inversions_after]
 			_status_label.add_theme_color_override("font_color", Color("#00e676"))
 
 		# Update buttons with new values
@@ -183,6 +201,8 @@ func _on_button_pressed(index: int) -> void:
 		if _is_sorted():
 			_status_label.text = "SIGNAL SORTED!"
 			_status_label.add_theme_color_override("font_color", Color("#00e676"))
+			if _learn_label:
+				_learn_label.text = "Key Insight: Sorting algorithms work by systematically reducing inversions. You sorted %d elements in %d swaps." % [_num_elements, _swap_count]
 			complete_module()
 
 

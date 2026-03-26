@@ -27,6 +27,9 @@ var _header_label: Label = null
 ## Reference to the hint label (set by subclasses)
 var _hint_label: Label = null
 
+## Reference to the learning label (set by subclasses)
+var _learn_label: Label = null
+
 
 func _ready() -> void:
 	# Set up base panel styling — subclasses call reset_module() after _build_ui()

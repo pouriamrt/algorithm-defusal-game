@@ -51,6 +51,15 @@ func _build_ui() -> void:
 
 	vbox.add_child(HSeparator.new())
 
+	# Algorithm intro
+	var intro := Label.new()
+	intro.text = "SHORTEST PATH: Find the route with the lowest total cost. Add up edge weights — fewer hops doesn't always mean cheaper."
+	intro.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	intro.add_theme_color_override("font_color", Color("#aabbcc"))
+	intro.add_theme_font_size_override("font_size", 11)
+	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(intro)
+
 	# Graph drawing area
 	_graph_panel = Panel.new()
 	_graph_panel.custom_minimum_size = GRAPH_SIZE
@@ -91,6 +100,15 @@ func _build_ui() -> void:
 	_reset_btn.text = "RESET PATH"
 	_reset_btn.pressed.connect(_on_reset_path)
 	btn_row.add_child(_reset_btn)
+
+	# Learn label (populated on completion)
+	_learn_label = Label.new()
+	_learn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_learn_label.add_theme_color_override("font_color", Color("#00e676"))
+	_learn_label.add_theme_font_size_override("font_size", 11)
+	_learn_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_learn_label.custom_minimum_size = Vector2(0, 30)
+	vbox.add_child(_learn_label)
 
 	# Hint
 	_hint_label = Label.new()
@@ -290,9 +308,11 @@ func _on_confirm() -> void:
 		_path_label.text = "OPTIMAL ROUTE FOUND!"
 		_path_label.add_theme_color_override("font_color", Color("#00e676"))
 		_confirm_btn.disabled = true
+		if _learn_label:
+			_learn_label.text = "Key Insight: Dijkstra's algorithm finds shortest paths by always expanding the cheapest unvisited node. Optimal cost: %d" % _optimal_cost
 		complete_module()
 	else:
-		_path_label.text = "Not optimal (cost %d vs best %d). Try again!" % [_player_cost, _optimal_cost]
+		_path_label.text = "Cost %d vs optimal %d. Try a different route — the cheapest path isn't always the most direct." % [_player_cost, _optimal_cost]
 		_path_label.add_theme_color_override("font_color", Color("#ff1744"))
 		record_wrong_action()
 		_on_reset_path()

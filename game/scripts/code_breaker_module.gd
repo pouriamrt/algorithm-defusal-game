@@ -39,6 +39,15 @@ func _build_ui() -> void:
 
 	vbox.add_child(HSeparator.new())
 
+	# Algorithm intro
+	var intro := Label.new()
+	intro.text = "LOGICAL DEDUCTION: Crack the code using exact and partial match feedback. Exact = right digit, right place. Partial = right digit, wrong place."
+	intro.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	intro.add_theme_color_override("font_color", Color("#aabbcc"))
+	intro.add_theme_font_size_override("font_size", 11)
+	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(intro)
+
 	var instr := Label.new()
 	instr.text = "Crack the 4-digit code (digits 1-%d).\nGreen = right digit, right place.\nYellow = right digit, wrong place." % _max_digit
 	instr.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -82,6 +91,15 @@ func _build_ui() -> void:
 	_history_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_history_container.add_theme_constant_override("separation", 2)
 	scroll.add_child(_history_container)
+
+	# Learn label (populated on completion)
+	_learn_label = Label.new()
+	_learn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_learn_label.add_theme_color_override("font_color", Color("#00e676"))
+	_learn_label.add_theme_font_size_override("font_size", 11)
+	_learn_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_learn_label.custom_minimum_size = Vector2(0, 30)
+	vbox.add_child(_learn_label)
 
 	# Hint
 	_hint_label = Label.new()
@@ -196,9 +214,16 @@ func _on_submit() -> void:
 		_feedback_label.text = "CODE CRACKED!"
 		_feedback_label.add_theme_color_override("font_color", Color("#00e676"))
 		_submit_btn.disabled = true
+		if _learn_label:
+			_learn_label.text = "Key Insight: Constraint satisfaction uses feedback to eliminate possibilities systematically. You cracked it in %d attempts." % _attempt_count
 		complete_module()
 	else:
-		_feedback_label.text = "%d exact, %d partial" % [exact, partial]
+		if exact > 0:
+			_feedback_label.text = "%d exact, %d partial — lock in the exact matches and rearrange the rest." % [exact, partial]
+		elif partial > 0:
+			_feedback_label.text = "0 exact, %d partial — right digits, wrong positions. Try moving them around." % partial
+		else:
+			_feedback_label.text = "No matches. Eliminate digits %s from consideration." % str(guess)
 		_feedback_label.add_theme_color_override("font_color", Color("#ffeb3b"))
 		record_wrong_action()
 

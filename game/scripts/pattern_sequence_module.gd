@@ -39,6 +39,15 @@ func _build_ui() -> void:
 
 	vbox.add_child(HSeparator.new())
 
+	# Algorithm intro
+	var intro := Label.new()
+	intro.text = "PATTERN RECOGNITION: Identify the mathematical rule governing this sequence. Look at differences, ratios, or relationships between consecutive terms."
+	intro.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	intro.add_theme_color_override("font_color", Color("#aabbcc"))
+	intro.add_theme_font_size_override("font_size", 11)
+	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(intro)
+
 	var instr := Label.new()
 	instr.text = "Find the missing number in the sequence."
 	instr.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -71,6 +80,15 @@ func _build_ui() -> void:
 	_feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_feedback_label.add_theme_font_size_override("font_size", 18)
 	vbox.add_child(_feedback_label)
+
+	# Learn label (populated on completion)
+	_learn_label = Label.new()
+	_learn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_learn_label.add_theme_color_override("font_color", Color("#00e676"))
+	_learn_label.add_theme_font_size_override("font_size", 11)
+	_learn_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_learn_label.custom_minimum_size = Vector2(0, 30)
+	vbox.add_child(_learn_label)
 
 	_hint_label = Label.new()
 	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -181,9 +199,11 @@ func _on_submit() -> void:
 		# Reveal the answer
 		for i in range(_labels.size()):
 			pass
+		if _learn_label:
+			_learn_label.text = "Key Insight: This was a %s sequence. Recognizing patterns is fundamental to algorithm design and data compression." % _pattern_type
 		complete_module()
 	else:
-		_feedback_label.text = "Incorrect — try again"
+		_feedback_label.text = "Not quite. Study the gaps between numbers — is the pattern adding, multiplying, or something else?"
 		_feedback_label.add_theme_color_override("font_color", Color("#ff1744"))
 		record_wrong_action()
 

@@ -40,6 +40,15 @@ func _build_ui() -> void:
 	# Separator
 	vbox.add_child(HSeparator.new())
 
+	# Algorithm intro
+	var intro := Label.new()
+	intro.text = "BINARY SEARCH: Narrow down the target by eliminating half the range each guess. The optimal strategy always guesses the midpoint."
+	intro.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	intro.add_theme_color_override("font_color", Color("#aabbcc"))
+	intro.add_theme_font_size_override("font_size", 11)
+	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(intro)
+
 	# Range display
 	_range_label = Label.new()
 	_range_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -75,6 +84,15 @@ func _build_ui() -> void:
 	_guess_count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_guess_count_label.add_theme_color_override("font_color", Color("#e0e0e0"))
 	vbox.add_child(_guess_count_label)
+
+	# Learn label (populated on completion)
+	_learn_label = Label.new()
+	_learn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_learn_label.add_theme_color_override("font_color", Color("#00e676"))
+	_learn_label.add_theme_font_size_override("font_size", 11)
+	_learn_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_learn_label.custom_minimum_size = Vector2(0, 30)
+	vbox.add_child(_learn_label)
 
 	# Hint
 	_hint_label = Label.new()
@@ -121,15 +139,17 @@ func _on_submit() -> void:
 		_feedback_label.text = "FREQUENCY LOCKED!"
 		_feedback_label.add_theme_color_override("font_color", Color("#00e676"))
 		_submit_btn.disabled = true
+		if _learn_label:
+			_learn_label.text = "Key Insight: Binary search finds any value in a sorted range of N items in at most log2(N) guesses. You used %d guesses (optimal: %d)." % [_guess_count, ceili(log(float(GameState.freq_range_max)) / log(2.0))]
 		complete_module()
 	elif guess < _target:
-		_feedback_label.text = "TOO LOW"
+		_feedback_label.text = "TOO LOW ↑  (eliminated %d values below)" % (guess - _range_low + 1)
 		_feedback_label.add_theme_color_override("font_color", Color("#42a5f5"))
 		_range_low = max(_range_low, guess + 1)
 		_range_label.text = "Range: [%d — %d]" % [_range_low, _range_high]
 		record_wrong_action()
 	else:
-		_feedback_label.text = "TOO HIGH"
+		_feedback_label.text = "TOO HIGH ↓  (eliminated %d values above)" % (_range_high - guess + 1)
 		_feedback_label.add_theme_color_override("font_color", Color("#ff1744"))
 		_range_high = min(_range_high, guess - 1)
 		_range_label.text = "Range: [%d — %d]" % [_range_low, _range_high]

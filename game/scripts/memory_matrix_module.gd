@@ -42,6 +42,15 @@ func _build_ui() -> void:
 
 	vbox.add_child(HSeparator.new())
 
+	# Algorithm intro
+	var intro := Label.new()
+	intro.text = "SPATIAL MEMORY: Memorize the highlighted pattern, then reproduce it. Try chunking cells into groups or shapes."
+	intro.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	intro.add_theme_color_override("font_color", Color("#aabbcc"))
+	intro.add_theme_font_size_override("font_size", 11)
+	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(intro)
+
 	_status_label = Label.new()
 	_status_label.text = "MEMORIZE THE PATTERN"
 	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -73,6 +82,15 @@ func _build_ui() -> void:
 	_confirm_btn.pressed.connect(_on_confirm)
 	_confirm_btn.visible = false
 	vbox.add_child(_confirm_btn)
+
+	# Learn label (populated on completion)
+	_learn_label = Label.new()
+	_learn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_learn_label.add_theme_color_override("font_color", Color("#00e676"))
+	_learn_label.add_theme_font_size_override("font_size", 11)
+	_learn_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_learn_label.custom_minimum_size = Vector2(0, 30)
+	vbox.add_child(_learn_label)
 
 	# Hint
 	_hint_label = Label.new()
@@ -230,9 +248,11 @@ func _on_confirm() -> void:
 				style.bg_color = Color("#00e676", 0.6)
 				style.set_corner_radius_all(4)
 				_buttons[i].add_theme_stylebox_override("normal", style)
+		if _learn_label:
+			_learn_label.text = "Key Insight: Caching stores frequently accessed data for fast retrieval — just like your brain cached this pattern. Cells memorized: %d" % _num_highlighted
 		complete_module()
 	else:
-		_status_label.text = "%d correct, %d wrong, %d missed. Try again!" % [correct, wrong, missed]
+		_status_label.text = "%d correct, %d wrong, %d missed. Try grouping cells into shapes — our brains remember patterns better than individual positions." % [correct, wrong, missed]
 		_status_label.add_theme_color_override("font_color", Color("#ff1744"))
 		record_wrong_action()
 		# Reset player selection but don't show pattern again
