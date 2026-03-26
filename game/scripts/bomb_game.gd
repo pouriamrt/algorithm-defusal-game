@@ -159,47 +159,40 @@ func _build_ui() -> void:
 	_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	right_col.add_child(_timer_label)
 
+	# --- AI Commentary + Status bar (fixed height, always visible) ---
+	var bottom_bar := HBoxContainer.new()
+	bottom_bar.add_theme_constant_override("separation", 10)
+	vbox.add_child(bottom_bar)
+
+	_commentary_icon = Label.new()
+	_commentary_icon.text = "AI"
+	_commentary_icon.add_theme_font_size_override("font_size", 11)
+	_commentary_icon.add_theme_color_override("font_color", Color("#00e5ff"))
+	bottom_bar.add_child(_commentary_icon)
+
+	_commentary_label = Label.new()
+	_commentary_label.text = ""
+	_commentary_label.add_theme_font_size_override("font_size", 13)
+	_commentary_label.add_theme_color_override("font_color", Color("#ffeb3b"))
+	_commentary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_commentary_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bottom_bar.add_child(_commentary_label)
+
+	_status_label = Label.new()
+	_status_label.text = "3 remaining"
+	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_status_label.add_theme_color_override("font_color", Color("#aabbcc"))
+	_status_label.add_theme_font_size_override("font_size", 12)
+	bottom_bar.add_child(_status_label)
+
 	vbox.add_child(HSeparator.new())
 
-	# --- Module container ---
+	# --- Module container (fills remaining space, always last) ---
 	_module_container = HBoxContainer.new()
 	_module_container.add_theme_constant_override("separation", 15)
 	_module_container.alignment = BoxContainer.ALIGNMENT_CENTER
 	_module_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	vbox.add_child(_module_container)
-
-	vbox.add_child(HSeparator.new())
-
-	# --- AI Commentary Bar ---
-	var commentary_row := HBoxContainer.new()
-	commentary_row.add_theme_constant_override("separation", 8)
-	commentary_row.custom_minimum_size = Vector2(0, 32)
-	vbox.add_child(commentary_row)
-
-	_commentary_icon = Label.new()
-	_commentary_icon.text = "AI"
-	_commentary_icon.add_theme_font_size_override("font_size", 12)
-	_commentary_icon.add_theme_color_override("font_color", Color("#00e5ff"))
-	_commentary_icon.custom_minimum_size = Vector2(28, 0)
-	commentary_row.add_child(_commentary_icon)
-
-	_commentary_label = Label.new()
-	_commentary_label.text = ""
-	_commentary_label.add_theme_font_size_override("font_size", 15)
-	_commentary_label.add_theme_color_override("font_color", Color("#ffeb3b"))
-	_commentary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_commentary_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	commentary_row.add_child(_commentary_label)
-
-	vbox.add_child(HSeparator.new())
-
-	# --- Status bar ---
-	_status_label = Label.new()
-	_status_label.text = "3 modules remaining"
-	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_status_label.add_theme_color_override("font_color", Color("#e0e0e0"))
-	_status_label.add_theme_font_size_override("font_size", 14)
-	vbox.add_child(_status_label)
 
 
 func _apply_wave_theme() -> void:
