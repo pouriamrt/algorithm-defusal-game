@@ -20,6 +20,9 @@ Web-export/
 # PaperBanana/MCP outputs
 outputs/
 
+# Superpowers planning docs (local only)
+docs/superpowers/
+
 # OS
 .DS_Store
 Thumbs.db
