@@ -17,6 +17,9 @@ export_presets.cfg
 *.translation
 Web-export/
 
+# PaperBanana/MCP outputs
+outputs/
+
 # OS
 .DS_Store
 Thumbs.db
