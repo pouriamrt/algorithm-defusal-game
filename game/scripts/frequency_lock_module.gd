@@ -155,13 +155,13 @@ func _on_submit() -> void:
 	elif _hot_cold_mode:
 		_handle_hot_cold_guess(guess)
 	elif guess < _target:
-		_feedback_label.text = "TOO LOW ↑  (eliminated %d values below)" % (guess - _range_low + 1)
+		_feedback_label.text = "TOO LOW  (eliminated %d values below)" % (guess - _range_low + 1)
 		_feedback_label.add_theme_color_override("font_color", Color("#42a5f5"))
 		_range_low = max(_range_low, guess + 1)
 		_range_label.text = "Range: [%d — %d]" % [_range_low, _range_high]
 		record_wrong_action()
 	else:
-		_feedback_label.text = "TOO HIGH ↓  (eliminated %d values above)" % (_range_high - guess + 1)
+		_feedback_label.text = "TOO HIGH  (eliminated %d values above)" % (_range_high - guess + 1)
 		_feedback_label.add_theme_color_override("font_color", Color("#ff1744"))
 		_range_high = min(_range_high, guess - 1)
 		_range_label.text = "Range: [%d — %d]" % [_range_low, _range_high]
