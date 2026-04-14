@@ -20,6 +20,10 @@ Web-export/
 # PaperBanana/MCP outputs
 outputs/
 
+# Reports
+report/
+*.pptx
+
 # Superpowers planning docs (local only)
 docs/superpowers/
 
